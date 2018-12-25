@@ -24,4 +24,9 @@ Helix is still under development so some (or most) features might not be availab
 - _Genomes_ are loaded on request or automatically; Helix can be configured to watch a specific location on your file system (or your entire file system) and automatically attempt to load any new _Genomes_ found in that location
 - This approach makes deploying new _Genomes_ as easy as storing the _Genome_ jar file on the target machine
 
-# CAUTION: I'm not responsible for any misuse of Helix. Helix is intended to be used for educational or pentesting purposes only.
+# Conclusion
+This is just a fun side project for me so I can't promise regular updates, but I'll do my best to keep it up to date.
+
+**Please boost my ego by starring this project. Thanks :)**
+
+## CAUTION: I'm not responsible for any misuse of Helix. Helix is intended to be used for educational or pentesting purposes only.
