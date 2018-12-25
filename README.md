@@ -13,11 +13,13 @@ Helix is still under development so some (or most) features might not be availab
 - Tor layer; all network layer traffic can be optionally routed through Tor
 - VPS layer; all network layer traffic can be optionally routed through a VPN
 - SOCKS / HTTP proxy support; all network layer traffic can be optionally routed through a SOCKS / HTTP proxy
+
 ## Rich toolkit
 - Lightweight HTTP client which can be tunneled through Tor, a VPN or a proxy
 - File digest utilities (SHA-256 file digest, SHA-256 merkle root) provide a fast and easy way of checking the integrity of your _Genome's_ resources
 - Zip utilities (compress or extract a zip file with a single method call)
 - **TBD**
+
 ## Genomes
 - Helix applications are called _Genomes_
 - Each _Genome_ lives inside a non-executable (or executable if your application requires it) jar file
@@ -25,7 +27,7 @@ Helix is still under development so some (or most) features might not be availab
 - This approach makes deploying new _Genomes_ as easy as storing the _Genome_ jar file on the target machine
 
 # Documentation
-To generate javadoc run `mvn javadoc:javadoc` inside the project root (`{helix_repo}/framework`). If the build is successful JavaDoc will be placed inside `{project_root}/target/site/apidocs`.
+To generate JavaDoc run `mvn javadoc:javadoc` inside the project root (`{helix_repo}/framework`). If the build is successful JavaDoc will be placed inside `{project_root}/target/site/apidocs`.
 
 # Conclusion
 This is just a fun side project for me so I can't promise regular updates, but I'll do my best to keep it up to date.
