@@ -24,6 +24,9 @@ Helix is still under development so some (or most) features might not be availab
 - _Genomes_ are loaded on request or automatically; Helix can be configured to watch a specific location on your file system (or your entire file system) and automatically attempt to load any new _Genomes_ found in that location
 - This approach makes deploying new _Genomes_ as easy as storing the _Genome_ jar file on the target machine
 
+# Documentation
+To generate javadoc run `mvn javadoc:javadoc` inside the project root (`{helix_repo}/framework`). If the build is successful JavaDoc will be placed inside `{project_root}/target/site/apidocs`.
+
 # Conclusion
 This is just a fun side project for me so I can't promise regular updates, but I'll do my best to keep it up to date.
 
