@@ -167,13 +167,16 @@ public class HttpClient
 
         String[] statusLine = br.readLine().split(" ");
 
-        if(statusLine.length != 3) throw new IOException("Invalid status line");
+        if(statusLine.length < 3) throw new IOException("Invalid status line");
 
         if(!statusLine[0].equals("HTTP/" + VERSION)) throw new UnsupportedHttpVersion(statusLine[0]);
 
         headers = new HashMap<>();
         statusCode = Integer.parseInt(statusLine[1]);
-        reasonPhrase = statusLine[2];
+
+        // Reason phrase can contain spaces so we need to reassemble all the parts
+        for(int i = 2; i < statusLine.length; i++) reasonPhrase += statusLine[i] + " ";
+        reasonPhrase = reasonPhrase.trim();
 
         String line;
 
