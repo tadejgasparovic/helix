@@ -71,6 +71,7 @@ public class FileDigest {
      * Calculates the merkle root of all files in rootDir which pass the fileFilter
      * @param rootDir The root directory for the merkle root calculation
      * @param fileFilter Only files which pass the filtration will be added to the merkle root
+     * @return The 32 bytes of the merkle root hash
      * @throws IOException If any file operation fails
      * @throws NoSuchAlgorithmException If SHA-256 wasn't found on the system
      * **/

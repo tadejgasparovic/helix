@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
@@ -42,7 +41,7 @@ public class TestFileDigest
     @Test
     public void doesDigestFileWithSHA256() throws IOException, NoSuchAlgorithmException
     {
-        byte[] hash = FileDigest.digest(new File("./test"));
+        byte[] hash = FileDigest.digest(new File("./test-resources/test"));
         assertArrayEquals(hash, new byte[]{
                 (byte)0x2d,
                 (byte)0x36,
@@ -84,7 +83,38 @@ public class TestFileDigest
     {
         byte[] hash = FileDigest.merkleRoot(new File("./test-resources/"));
         assertArrayEquals(hash, new byte[]{
-                //
+                (byte)0x45,
+                (byte)0x03,
+                (byte)0x80,
+                (byte)0x9F,
+                (byte)0xC7,
+                (byte)0xC2,
+                (byte)0xA4,
+                (byte)0xEB,
+                (byte)0x9F,
+                (byte)0x9D,
+                (byte)0x75,
+                (byte)0xD6,
+                (byte)0x99,
+                (byte)0x1A,
+                (byte)0x5E,
+                (byte)0xD8,
+                (byte)0x80,
+                (byte)0xB4,
+                (byte)0x46,
+                (byte)0x56,
+                (byte)0xA2,
+                (byte)0x7C,
+                (byte)0x21,
+                (byte)0x23,
+                (byte)0x41,
+                (byte)0x14,
+                (byte)0xDE,
+                (byte)0xC9,
+                (byte)0xC8,
+                (byte)0xA6,
+                (byte)0x55,
+                (byte)0xD8
         });
     }
 }

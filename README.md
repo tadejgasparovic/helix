@@ -1,7 +1,7 @@
 # What is Helix?
 Helix is a Java exploitation framework centered around the simplicity and speed of use by bringing most of the boring overhead within a single method invocation so you can focus on exploiting the target machine.
 
-# NOTICE: Still in development
+# Still in development
 Helix is still under development so some (or most) features might not be available yet.
 
 # Features
@@ -33,5 +33,5 @@ To generate JavaDoc run `mvn javadoc:javadoc` inside the project root (`{helix_r
 This is just a fun side project for me so I can't promise regular updates, but I'll do my best to keep it up to date.
 
 **Please boost my ego by starring this project. Thanks :)**
-
+---
 ## CAUTION: I'm not responsible for any misuse of Helix. Helix is intended to be used for educational or pentesting purposes only.

@@ -22,8 +22,8 @@ public class Zip
      * **/
     public static void extract(File source, File target) throws IOException
     {
-        if(source == null || !source.exists()) throw new FileNotFoundException("source zip");
-        if(target == null || !target.isDirectory() || (!target.exists() && !target.mkdirs())) throw new FileNotFoundException("target dir");
+        if(source == null || !source.exists()) throw new FileNotFoundException("Source zip");
+        if(target == null || !target.isDirectory() || (!target.exists() && !target.mkdirs())) throw new FileNotFoundException("Target dir");
 
         ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(source));
 
@@ -59,7 +59,7 @@ public class Zip
      * @param files The files to be compressed
      * @throws IOException If compression fails
      * **/
-    public static void compress(File target, File rootDir, File... files) throws IOException
+    public static void compress(File target, File rootDir, File ...files) throws IOException
     {
         if(target == null || rootDir == null || files == null || files.length == 0) throw new ZipException("Can't call Zip.compress() with null arguments");
 

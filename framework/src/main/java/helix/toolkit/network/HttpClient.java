@@ -1,6 +1,8 @@
 package helix.toolkit.network;
 
 import helix.exceptions.UnsupportedHttpVersion;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -10,6 +12,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class HttpClient
 {
@@ -18,11 +21,15 @@ public class HttpClient
      * **/
     private static final String VERSION = "1.1";
 
-    private String userAgent;
+    private final String userAgent;
+
+    private Socket httpSocket;
 
     private Map<String, String> headers;
     private int statusCode;
     private String reasonPhrase;
+
+    private static final Logger LOGGER = LogManager.getLogger(HttpClient.class);
 
     /**
      * Creates a brand new HttpClient with the default user agent
@@ -62,40 +69,28 @@ public class HttpClient
      * **/
     public InputStream sendRequest(URL url, String method, Map<String, String> postData, Map<String, String> headers) throws IOException
     {
+        finishRequest(); // First finish any previous request that might not have been finished by the user
+
         String request = prepareRequest(url, method, postData, headers);
 
-        if(url.getProtocol().toUpperCase().equals("HTTPS"))
-        {
-            SSLSocket httpSocket = openSSLSocket(url);
+        if(url.getProtocol().toUpperCase().equals("HTTPS")) httpSocket = openSSLSocket(url);
+        else httpSocket = openSocket(url);
 
-            if(!httpSocket.isConnected()) throw new IOException();
+        if(!httpSocket.isConnected()) throw new IOException();
 
-            httpSocket.getOutputStream().write(request.getBytes());
-            httpSocket.getOutputStream().flush();
+        httpSocket.getOutputStream().write(request.getBytes());
+        httpSocket.getOutputStream().flush();
 
-            parseResponseHeader(httpSocket.getInputStream());
+        parseResponseHeader(httpSocket.getInputStream());
+        handleRedirects(url, method, postData, headers);
 
-            return httpSocket.getInputStream();
-        }
-        else
-        {
-            Socket httpSocket = openSocket(url);
-
-            if(!httpSocket.isConnected()) throw new IOException();
-
-            httpSocket.getOutputStream().write(request.getBytes());
-            httpSocket.getOutputStream().flush();
-
-            parseResponseHeader(httpSocket.getInputStream());
-
-            return httpSocket.getInputStream();
-        }
+        return httpSocket.getInputStream();
     }
 
     /**
      * Prepares the HTTP request
      * @param url Resource URL
-     * @param method HTTP to be used
+     * @param method HTTP request method to be used
      * @param postData HTTP POST key-value pairs
      * @param headers HTTP custom headers
      * @return HTTP request string
@@ -145,6 +140,7 @@ public class HttpClient
 
         // Set default headers
         headers.put("User-Agent", userAgent);
+        headers.put("Host", url.getHost());
         headers.put("Connection", "close");
 
         headers.forEach((key, value) -> request.append(normalizeHeaderName(key)).append(": ").append(value).append("\r\n"));
@@ -183,8 +179,102 @@ public class HttpClient
         while((line = br.readLine()) != null && !line.equals(""))
         {
             String[] header = line.split(":");
-            headers.put(normalizeHeaderName(header[0]), header[1].trim());
+
+            StringBuilder value = new StringBuilder();
+            for(int i = 1; i < header.length; i++)
+            {
+                if(i > 1) value.append(":");
+                value.append(header[i]);
+            }
+
+            headers.put(normalizeHeaderName(header[0]), value.toString().trim());
         }
+    }
+
+    /**
+     * Performs a redirect in case of a 3xx response
+     * @param url Last request URL
+     * @param method Last request method
+     * @param postData Last request post data
+     * @param headers Last request headers
+     * @throws IOException If the redirect fails
+     * **/
+    private void handleRedirects(URL url, String method, Map<String, String> postData, Map<String, String> headers) throws IOException
+    {
+        Set<String> keys = this.headers.keySet();
+
+        LOGGER.debug("Status code: {}", getStatusCode());
+        for(String key : keys) LOGGER.debug("{}: {}", key, this.headers.get(key));
+
+        switch (getStatusCode())
+        {
+            case 301:
+            case 302:
+            case 303:
+                // These status codes require a new request to be made as GET
+                method = "GET";
+                postData = null;
+                break;
+
+            case 307:
+            case 308:
+                // These status codes don't require any special handling but we still need
+                // the case block so it doesn't catch the default block
+                break;
+
+            default:
+                return;
+        }
+
+        finishRequest(); // Finish the previous request before proceeding
+
+        String nextLocation = this.headers.get("Location");
+
+        if(nextLocation.startsWith("/")) // Redirected to just a different URI?
+        {
+            StringBuilder nextURLSpec = new StringBuilder();
+            nextURLSpec.append(url.getProtocol());
+            nextURLSpec.append("://");
+            nextURLSpec.append(url.getHost());
+
+            if(url.getPort() >= 0)
+            {
+                nextURLSpec.append(":");
+                nextURLSpec.append(url.getPort());
+            }
+
+
+            nextURLSpec.append(nextLocation);
+
+            if(url.getQuery() != null)
+            {
+                nextURLSpec.append("?");
+                nextURLSpec.append(url.getQuery());
+            }
+
+            url = new URL(nextURLSpec.toString());
+        }
+        else if(nextLocation.toUpperCase().startsWith("HTTP")) // Redirected to a whole different URL?
+        {
+            url = new URL(nextLocation);
+        }
+        else
+        {
+            throw new IOException("Invalid redirect");
+        }
+
+        String request = prepareRequest(url, method, postData, headers);
+
+        if(url.getProtocol().toUpperCase().equals("HTTPS")) httpSocket = openSSLSocket(url);
+        else httpSocket = openSocket(url);
+
+        if(!httpSocket.isConnected()) throw new IOException();
+
+        httpSocket.getOutputStream().write(request.getBytes());
+        httpSocket.getOutputStream().flush();
+
+        parseResponseHeader(httpSocket.getInputStream());
+        handleRedirects(url, method, postData, headers);
     }
 
     /**
@@ -202,6 +292,7 @@ public class HttpClient
      * Opens a new TCP socket with SSL
      * @param url The destination host URL
      * @return SSL Socket connected to the destionation host
+     * @throws IOException If the connection fails to open
      * **/
     protected SSLSocket openSSLSocket(URL url) throws IOException
     {
@@ -248,6 +339,19 @@ public class HttpClient
         stringBuilder.deleteCharAt(stringBuilder.length() - 1);
 
         return stringBuilder.toString();
+    }
+
+    /**
+     * Closes the connection to the server and  prepares the client for the next request
+     * @throws IOException If the TCP socket can't be closed
+     * **/
+    public void finishRequest() throws IOException
+    {
+        if(httpSocket != null)
+        {
+            if(httpSocket.isConnected() && !httpSocket.isClosed()) httpSocket.close();
+            httpSocket = null;
+        }
     }
 
     /**

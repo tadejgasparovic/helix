@@ -5,7 +5,11 @@ import helix.exceptions.OnionGeneralFailure;
 import helix.exceptions.OnionSetupFailure;
 import helix.exceptions.UnsupportedPlatform;
 import helix.system.HelixSystem;
+import helix.toolkit.files.FileUtils;
 import helix.toolkit.network.HttpClient;
+import helix.toolkit.zip.Zip;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -17,6 +21,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
@@ -28,6 +33,7 @@ public class OnionManager
     * */
     private static final String TOR_ROOT = "./tor";
     private static final File TOR_ROOT_DIR = new File(TOR_ROOT);
+    private static final String TOR_INTEGRITY_STORE = "./.tor.hash";
 
     /*
     * Tor proxy
@@ -55,6 +61,8 @@ public class OnionManager
     private static final String TOR_DOWNLOAD_UNIX = null; // TODO: Support Unix system downloads; for now assume Tor is already installed
     private static final String TOR_DOWNLOAD_MAC = null; // TODO: Support Mac system downloads; for now assume Tor is already installed
 
+    private static final Logger LOGGER = LogManager.getLogger(OnionManager.class);
+
     /**
      * Sets up Tor (if necessary) and starts it up
      * @throws OnionGeneralFailure Tor couldn't be started
@@ -67,14 +75,20 @@ public class OnionManager
 
         int setupFailures;
 
-        // Try to setup tor
-        for(setupFailures = 0; setupFailures < SETUP_FAILURE_LIMIT && !isSetup(); setupFailures++) setup();
+        LOGGER.debug("Checking tor setup and installing if necessary...");
 
-        if(setupFailures + 1 == SETUP_FAILURE_LIMIT)
+        // Try to setup tor
+        for(setupFailures = 0; (setupFailures < SETUP_FAILURE_LIMIT) && !isSetup(); setupFailures++) setup();
+
+        LOGGER.debug("Setup failures: {}", setupFailures);
+
+        if(setupFailures == SETUP_FAILURE_LIMIT)
         {
             // Even if the counter is maxed out the last try might've been a success
             if(!isSetup()) throw new OnionSetupFailure();
         }
+
+        LOGGER.debug("Tor setup / integrity check succeeded! Attempting startup...");
 
         int startupFailures;
 
@@ -90,13 +104,14 @@ public class OnionManager
             }
         }
 
+        LOGGER.debug("Startup failures: {}", startupFailures);
+
         if(startupFailures + 1 == STARTUP_FAILURE_LIMIT)
         {
             if(!isTor()) throw new OnionGeneralFailure();
         }
 
-        // Tor is setup and running
-        // TODO
+        LOGGER.debug("Tor is setup and running");
     }
 
     /**
@@ -108,13 +123,16 @@ public class OnionManager
     {
         if(getTorDownload() == null)
         {
+            LOGGER.debug("Using system Tor installation...");
             proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(proxyHost, proxyPort));
             return; // If there's no binary to download, then there's nothing to start
         }
         try {
+            LOGGER.debug("Starting Tor...");
             process = Runtime.getRuntime().exec(getTorCommand());
             proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(proxyHost, proxyPort));
         } catch (IOException e) {
+            LOGGER.error("Tor process couldn't be created", e);
             throw new OnionGeneralFailure();
         }
     }
@@ -130,8 +148,12 @@ public class OnionManager
 
         if(!TOR_ROOT_DIR.exists() || !TOR_ROOT_DIR.isDirectory()) return false;
 
+        LOGGER.debug("Checking the integrity of the installation...");
+
         // Check the binaries
         if(integrityCheck()) return true;
+
+        LOGGER.error("Integrity check failed...");
 
         return false;
     }
@@ -145,8 +167,15 @@ public class OnionManager
     private static boolean isTor() throws OnionGeneralFailure
     {
         try {
+            LOGGER.debug("Attempting Tor service IDENT...");
+
             Socket testSocket = new Socket(proxyHost, proxyPort);
-            if(!testSocket.isConnected()) return false; // No service detected running on proxyHost:proxyPort
+
+            if(!testSocket.isConnected())
+            {
+                LOGGER.debug("Tor service: NOT DETECTED");
+                return false; // No service detected running on proxyHost:proxyPort
+            }
 
             // If we can connect to the proxy we can further try to identify
             // the service by sending a dummy HTTP proxy request which Tor
@@ -163,6 +192,8 @@ public class OnionManager
             br.close();
 
             testSocket.close();
+
+            LOGGER.debug("Tor service: {}", (responseLine.toUpperCase().contains("TOR") ? "IDENT" : "NOT DETECTED"));
 
             return responseLine.toUpperCase().contains("TOR");
 
@@ -200,9 +231,9 @@ public class OnionManager
      * **/
     private static boolean integrityCheck() throws OnionSetupFailure
     {
-        File hashFile = new File("./.tor.hash");
+        File integrityStore = new File(TOR_INTEGRITY_STORE);
 
-        if(!hashFile.exists() || hashFile.length() != 32 || hashFile.isDirectory()) return false;
+        if(!integrityStore.exists() || integrityStore.length() != 32 || integrityStore.isDirectory()) return false;
 
         byte[] merkleRoot;
         byte[] referenceHash;
@@ -210,7 +241,7 @@ public class OnionManager
         try
         {
             merkleRoot = FileDigest.merkleRoot(TOR_ROOT_DIR); // TODO: Only read files that don't change over time (i.e. ignore logs)
-            referenceHash = Files.readAllBytes(Paths.get(hashFile.toURI()));
+            referenceHash = Files.readAllBytes(Paths.get(integrityStore.toURI()));
         }
         catch (IOException | NoSuchAlgorithmException e)
         {
@@ -219,9 +250,8 @@ public class OnionManager
 
         if(Arrays.equals(merkleRoot, referenceHash)) return true;
 
-        hashFile.delete();
+        integrityStore.delete();
         TOR_ROOT_DIR.delete();
-        TOR_ROOT_DIR.mkdir();
 
         return false;
     }
@@ -238,11 +268,27 @@ public class OnionManager
         if(downloadURL == null) return;
 
         try {
+            LOGGER.debug("Downloading Tor binaries...");
+
+            if(TOR_ROOT_DIR.exists()) FileUtils.deleteDirectoryRecursively(TOR_ROOT_DIR);
+
             File binaries = downloadBinaries(new URL(downloadURL));
 
-            // TODO
-        } catch (IOException e) {
-            throw new OnionSetupFailure();
+            if(binaries == null) throw new OnionSetupFailure("Couldn't download binaries");
+
+            // TODO: Verify integrity
+
+            LOGGER.debug("Extracting files...");
+            Zip.extract(binaries, TOR_ROOT_DIR);
+
+            LOGGER.debug("Calculating merkle root...");
+            byte[] merkleRoot = FileDigest.merkleRoot(TOR_ROOT_DIR);
+            Files.write(Paths.get(TOR_INTEGRITY_STORE), merkleRoot);
+
+            LOGGER.debug("Setup finished. Integrity store created.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new OnionSetupFailure(e.getMessage());
         }
     }
 
@@ -256,6 +302,7 @@ public class OnionManager
      **/
     public static Socket openSocket(String address, int port) throws IOException
     {
+        LOGGER.debug("Opening plain text socket to {}:{}...", address, port);
         Socket socket = new Socket(proxy);
         InetSocketAddress addr = InetSocketAddress.createUnresolved(address, port);
         socket.connect(addr);
@@ -271,8 +318,10 @@ public class OnionManager
      **/
     public static SSLSocket openSSLSocket(String address, int port) throws IOException
     {
+
         Socket socket = openSocket(address, port);
 
+        LOGGER.debug("Wrapping socket to {}:{} with SSL...", address, port);
         return (SSLSocket) ((SSLSocketFactory)SSLSocketFactory.getDefault()).createSocket(socket, proxyHost, proxyPort, true);
     }
 
@@ -320,15 +369,18 @@ public class OnionManager
 
         InputStream inputStream = httpClient.getResource(url);
 
+        LOGGER.debug("Status Code: {}", httpClient.getStatusCode());
+
         if(httpClient.getStatusCode() / 100 != 2) return null;
 
         Path path = Files.createTempFile("onion", ".zip");
 
-        Files.copy(inputStream, path); // Download the file
+        Files.copy(inputStream, path, StandardCopyOption.REPLACE_EXISTING); // Download the file
 
         inputStream.close();
 
         File file = path.toFile();
+        file.deleteOnExit();
 
         // Simple integrity check
         if(file.length() != httpClient.getContentLength()) throw new OnionSetupFailure("Download failed");
