@@ -1,5 +1,6 @@
 package helix.toolkit.network;
 
+import helix.exceptions.TooManyHttpRedirects;
 import helix.exceptions.UnsupportedHttpVersion;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,6 +22,11 @@ public class HttpClient
      * **/
     private static final String VERSION = "1.1";
 
+    /**
+     * Maximum number of redirects to follow
+     * **/
+    private final int MAX_REDIRECTS;
+
     private final String userAgent;
 
     private Socket httpSocket;
@@ -28,34 +34,49 @@ public class HttpClient
     private Map<String, String> headers;
     private int statusCode;
     private String reasonPhrase;
+    private int totalRedirects;
 
     private static final Logger LOGGER = LogManager.getLogger(HttpClient.class);
 
     /**
-     * Creates a brand new HttpClient with the default user agent
+     * Creates a new HttpClient instance with the default user agent
      * **/
     public HttpClient()
     {
         this.userAgent = "Mozilla/5.0";
+        this.MAX_REDIRECTS = 20;
     }
 
     /**
-     * Creates a brand new HttpClient with a custom user agent
-     * @param userAgent The user agent HttpClient will be initialized as
+     * Creates a new HttpClient instance with a custom user agent
+     * @param userAgent The user agent HttpClient will be initialized with
      * **/
     public HttpClient(String userAgent)
     {
         this.userAgent = userAgent;
+        this.MAX_REDIRECTS = 20;
     }
+
+    /**
+     * Creates a new HttpClient instance with a custom user agent and custom redirect limit
+     * @param userAgent The user agent HttpClient will be initialized with
+     * @param maxRedirects The maximum number of redirects this HttpClient instance will follow
+     * **/
+    public HttpClient(String userAgent, int maxRedirects)
+    {
+        this.userAgent = userAgent;
+        this.MAX_REDIRECTS = maxRedirects;
+    }
+
     /**
      * Loads a public resource from a URL
      * @param url The URL of the resource
      * @return The input stream of the resource
      * @throws IOException If the server can't be reached / resource doesn't exist
      * **/
-    public InputStream getResource(URL url) throws IOException
+    public InputStream getResource(URL url) throws IOException, TooManyHttpRedirects
     {
-        return sendRequest(url, "GET", null, null);
+        return sendRequest(url, "GET", null, null, true);
     }
 
     /**
@@ -64,12 +85,15 @@ public class HttpClient
      * @param method HTTP to be used
      * @param postData HTTP POST key-value pairs
      * @param headers HTTP custom headers
+     * @param followRedirects If TRUE the HttpClient will automatically follow redirects
      * @return The input stream of the resource
      * @throws IOException If the server can't be reached / resource doesn't exist
      * **/
-    public InputStream sendRequest(URL url, String method, Map<String, String> postData, Map<String, String> headers) throws IOException
+    public InputStream sendRequest(URL url, String method, Map<String, String> postData, Map<String, String> headers, boolean followRedirects) throws IOException, TooManyHttpRedirects
     {
         finishRequest(); // First finish any previous request that might not have been finished by the user
+
+        totalRedirects = 0;
 
         String request = prepareRequest(url, method, postData, headers);
 
@@ -82,7 +106,7 @@ public class HttpClient
         httpSocket.getOutputStream().flush();
 
         parseResponseHeader(httpSocket.getInputStream());
-        handleRedirects(url, method, postData, headers);
+        if(followRedirects) handleRedirects(url, method, postData, headers);
 
         return httpSocket.getInputStream();
     }
@@ -199,7 +223,7 @@ public class HttpClient
      * @param headers Last request headers
      * @throws IOException If the redirect fails
      * **/
-    private void handleRedirects(URL url, String method, Map<String, String> postData, Map<String, String> headers) throws IOException
+    private void handleRedirects(URL url, String method, Map<String, String> postData, Map<String, String> headers) throws IOException, TooManyHttpRedirects
     {
         Set<String> keys = this.headers.keySet();
 
@@ -227,6 +251,10 @@ public class HttpClient
         }
 
         finishRequest(); // Finish the previous request before proceeding
+
+        if(totalRedirects >= MAX_REDIRECTS) throw new TooManyHttpRedirects();
+
+        totalRedirects++;
 
         String nextLocation = this.headers.get("Location");
 

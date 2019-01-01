@@ -3,6 +3,7 @@ package helix.network.tor;
 import helix.crypto.FileDigest;
 import helix.exceptions.OnionGeneralFailure;
 import helix.exceptions.OnionSetupFailure;
+import helix.exceptions.TooManyHttpRedirects;
 import helix.exceptions.UnsupportedPlatform;
 import helix.system.HelixSystem;
 import helix.toolkit.files.FileUtils;
@@ -363,7 +364,7 @@ public class OnionManager
      * @throws IOException If we're unable to download the file
      * @throws OnionSetupFailure If the downloaded file fails the integrity check
      * **/
-    private static File downloadBinaries(URL url) throws IOException, OnionSetupFailure
+    private static File downloadBinaries(URL url) throws IOException, OnionSetupFailure, TooManyHttpRedirects
     {
         HttpClient httpClient = new HttpClient();
 

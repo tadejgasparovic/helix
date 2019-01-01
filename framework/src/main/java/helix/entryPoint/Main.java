@@ -1,9 +1,6 @@
 package helix.entryPoint;
 
-import helix.exceptions.InvalidGenome;
-import helix.exceptions.OnionGeneralFailure;
-import helix.exceptions.OnionSetupFailure;
-import helix.exceptions.UnsupportedPlatform;
+import helix.exceptions.*;
 import helix.network.tor.OnionManager;
 import helix.toolkit.network.HiddenHttpClient;
 import helix.toolkit.network.HttpClient;
@@ -17,7 +14,7 @@ import java.net.URL;
 public class Main
 {
 
-    public static void main(String[] args) throws InvalidGenome, IOException, UnsupportedPlatform, OnionSetupFailure, OnionGeneralFailure
+    public static void main(String[] args) throws InvalidGenome, IOException, UnsupportedPlatform, OnionSetupFailure, OnionGeneralFailure, TooManyHttpRedirects
     {
         /*GenomeLoader.loadFromJar("./sandbox.jar");
 
