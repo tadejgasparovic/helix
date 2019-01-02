@@ -1,6 +1,7 @@
 package helix.entryPoint;
 
 import helix.exceptions.InvalidGenome;
+import helix.system.cli.HelixCli;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,9 +32,9 @@ public class GenomeLoader
     }
 
     /**
-     * Tries to load a genome from a JAR file
+     * Tries to load a Genome from a JAR file
      * @param filename The path to the JAR file
-     * @throws InvalidGenome If the JAR file doesn't contain a valid genome
+     * @throws InvalidGenome If the JAR file doesn't contain a valid Genome
      * **/
     public static void loadFromJar(String filename) throws InvalidGenome
     {
@@ -88,7 +89,7 @@ public class GenomeLoader
     }
 
     /**
-     * Invokes the onStartup() genome life-cycle method
+     * Invokes the onStartup() Genome life-cycle method
      * **/
     public static void startup()
     {
@@ -96,28 +97,28 @@ public class GenomeLoader
     }
 
     /**
-     * Forwards a command to a specific genome
+     * Forwards a command to a specific Genome
      * @param genomeId The genome the command will be sent to
-     * @throws InvalidGenome if the genome doesn't exist
+     * @throws InvalidGenome if the Genome doesn't exist
      * **/
-    public static void command(String genomeId/* TODO: Command */) throws InvalidGenome
+    public static void networkCommand(String genomeId/* TODO: Command */) throws InvalidGenome
     {
         Genome genome = loadedGenomes.get(genomeId);
         if(genome == null) throw new InvalidGenome();
 
-        genome.onCommand(/* TODO: Pass the command */);
+        genome.onNetworkCommand(/* TODO: Pass the command */);
     }
 
     /**
-     * Broadcasts a command to all loaded genomes
+     * Broadcasts a command to all loaded Genomes
      * **/
-    public static void broadcastCommand(/* TODO: Command */)
+    public static void broadcastNetworkCommand(/* TODO: Command */)
     {
-        loadedGenomes.values().forEach(Genome::onCommand);
+        loadedGenomes.values().forEach(Genome::onNetworkCommand);
     }
 
     /**
-     * Invokes the onShutdown() genome life-cycle method
+     * Invokes the onShutdown() Genome life-cycle method
      * **/
     public static void shutdown()
     {
@@ -125,7 +126,16 @@ public class GenomeLoader
     }
 
     /**
-     * Returns a set of all loaded genome IDs
+     * Invokes the registerCliCommands() Genome life-cycle method
+     * @param helixCli Helix CLI instance
+     * **/
+    public static void registerCliCommands(HelixCli helixCli)
+    {
+        loadedGenomes.values().forEach(genome -> genome.registerCliCommands(helixCli));
+    }
+
+    /**
+     * Returns a set of all loaded Genome IDs
      * @return Loaded genome IDs
      * **/
     public static Set<String> loadedGenomes()

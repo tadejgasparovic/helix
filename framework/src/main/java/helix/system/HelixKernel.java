@@ -5,13 +5,14 @@ import helix.exceptions.OnionGeneralFailure;
 import helix.exceptions.OnionSetupFailure;
 import helix.exceptions.UnsupportedPlatform;
 import helix.network.tor.OnionManager;
+import helix.system.cli.HelixCli;
 
 import java.util.Arrays;
 
 public class HelixKernel
 {
 
-    private static DevelopmentCli developmentCli;
+    private static HelixCli helixCli;
 
     /**
      * Returns the normalized platform OS name
@@ -45,7 +46,7 @@ public class HelixKernel
 
     /**
      * Bootstraps the Helix kernel.
-     * Initializes a secure CNC tunnel through Tor, loads Genomes, sets up development tools (if enabled),
+     * Initializes a secure CNC tunnel through Tor, loads Genomes, sets up Helix CLI,
      * starts Genome watchdogs (if configured).
      * @param args Command line arguments
      * @return TRUE if kernel bootstrap succeeds, otherwise FALSE
@@ -77,11 +78,11 @@ public class HelixKernel
         GenomeLoader.loadInstalledGenomes();
         GenomeLoader.startup();
 
-        // Dev tools
+        // Helix CLI
         if(Arrays.binarySearch(args, "--cli") >= 0)
         {
-            developmentCli = new DevelopmentCli();
-            developmentCli.start();
+            helixCli = new HelixCli();
+            helixCli.start();
         }
 
         // TODO: Start Genome watchdogs if configured
@@ -99,8 +100,8 @@ public class HelixKernel
 
         GenomeLoader.unloadGenomes();
 
-        developmentCli.close();
-        developmentCli = null;
+        helixCli.close();
+        helixCli = null;
 
         // TODO: Stop Genome watchdogs
     }
