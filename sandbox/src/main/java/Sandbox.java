@@ -1,6 +1,7 @@
 import helix.entryPoint.Genome;
 
-public class Sandbox extends Genome {
+public class Sandbox extends Genome
+{
 
     public Sandbox()
     {
@@ -11,15 +12,11 @@ public class Sandbox extends Genome {
         System.out.println("[SANDBOX] Startup");
     }
 
-    public void onCommand() {
-        System.out.println("[SANDBOX] Command");
+    public void onNetworkCommand() {
+        System.out.println("[SANDBOX] Network command");
     }
 
     public void onShutdown() {
         System.out.println("[SANDBOX] Shutdown");
-    }
-
-    public void onGracefulShutdown() {
-        System.out.println("[SANDBOX] Graceful shutdown");
     }
 }

@@ -12,6 +12,7 @@ public class ListGenomes implements CliCommand
     public void execute(HelixCli context, PrintStream printStream, String... arguments)
     {
         GenomeLoader.loadedGenomes().forEach(printStream::println);
+        printStream.println();
     }
 
     @Override

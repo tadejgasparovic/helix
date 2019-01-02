@@ -76,7 +76,6 @@ public class HelixKernel
 
         // Load and start all installed Genomes
         GenomeLoader.loadInstalledGenomes();
-        GenomeLoader.startup();
 
         // Helix CLI
         if(Arrays.binarySearch(args, "--cli") >= 0)

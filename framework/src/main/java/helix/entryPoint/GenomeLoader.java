@@ -11,6 +11,8 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -35,8 +37,9 @@ public class GenomeLoader
      * Tries to load a Genome from a JAR file
      * @param filename The path to the JAR file
      * @throws InvalidGenome If the JAR file doesn't contain a valid Genome
+     * @throws IOException If the Genome JAR file couldn't be installed
      * **/
-    public static void loadFromJar(String filename) throws InvalidGenome
+    public static String loadFromJar(String filename) throws InvalidGenome, IOException
     {
         File file = new File(filename);
 
@@ -44,7 +47,7 @@ public class GenomeLoader
 
         URL fileURL;
         try {
-            fileURL = new URL("file://" + file.getAbsolutePath());
+            fileURL = new URL("file://" + file.getAbsoluteFile().getPath());
         } catch (MalformedURLException e) {
             throw new InvalidGenome();
         }
@@ -66,6 +69,30 @@ public class GenomeLoader
         String main = config.getProperty("main");
         String name = config.getProperty("name");
 
+        if(!file.getAbsoluteFile().getPath().startsWith(GENOME_INSTALLATION_DIR.getAbsoluteFile().getPath()))
+        {
+            String installation = config.containsKey("installation") ? config.getProperty("installation") : "copy";
+
+            switch (installation)
+            {
+                case "copy":
+                    String installLocation = GENOME_INSTALLATION_DIR.getAbsoluteFile().getPath() + File.separator + file.getName();
+                    Files.copy(Paths.get(filename), Paths.get(installLocation));
+                    return loadFromJar(installLocation);
+
+                case "move":
+                    installLocation = GENOME_INSTALLATION_DIR.getAbsoluteFile().getPath() + File.separator + file.getName();
+                    Files.move(Paths.get(filename), Paths.get(installLocation));
+                    return loadFromJar(installLocation);
+
+                case "keep":
+                    break;
+
+                default:
+                    throw new InvalidGenome("Invalid 'installation' config value");
+            }
+        }
+
         Class genomeClass;
         try
         {
@@ -80,20 +107,14 @@ public class GenomeLoader
         try
         {
             Genome genome = (Genome) genomeClass.newInstance();
+            genome.onStartup();
             loadedGenomes.put(name, genome);
+            return name;
         }
         catch (InstantiationException | IllegalAccessException e)
         {
             throw new InvalidGenome();
         }
-    }
-
-    /**
-     * Invokes the onStartup() Genome life-cycle method
-     * **/
-    public static void startup()
-    {
-        loadedGenomes.values().forEach(Genome::onStartup);
     }
 
     /**
@@ -164,7 +185,7 @@ public class GenomeLoader
 
         for(File candidate : genomeCandidates)
         {
-            String[] nameParts = candidate.getName().split(".");
+            String[] nameParts = candidate.getName().split("\\.");
             if(!nameParts[nameParts.length - 1].trim().equals("jar")) return;
 
             try
@@ -173,9 +194,9 @@ public class GenomeLoader
                 loadFromJar(candidate.getPath());
                 LOGGER.debug("Candidate {} loaded successfully!");
             }
-            catch (InvalidGenome invalidGenome)
+            catch (InvalidGenome | IOException e)
             {
-                LOGGER.debug("Candidate failed to load!", invalidGenome);
+                LOGGER.debug("Candidate failed to load!", e);
             }
         }
 

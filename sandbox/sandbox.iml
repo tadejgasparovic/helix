@@ -14,7 +14,7 @@
     <orderEntry type="module-library">
       <library name="Maven: helix:framework:1.0-SNAPSHOT">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../framework/out/artifacts/framework_jar/framework.jar!/" />
+          <root url="jar://$MODULE_DIR$/../framework/target/framework-1.0-SNAPSHOT.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

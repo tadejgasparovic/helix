@@ -1,13 +1,17 @@
 package helix.system.cli;
 
-import helix.entryPoint.Genome;
 import helix.entryPoint.GenomeLoader;
 import helix.system.cli.commands.Exit;
 import helix.system.cli.commands.Help;
 import helix.system.cli.commands.Namespace;
 import helix.system.cli.namespaces.GenomeSequencer;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -83,7 +87,7 @@ public class HelixCli extends Thread
     }
 
     /**
-     * Regisrets Helix system namespaces as well as namespaces from all loaded Genomes
+     * Registers Helix system namespaces as well as namespaces from all loaded Genomes
      * **/
     private void registerInstalledNamespaces()
     {
