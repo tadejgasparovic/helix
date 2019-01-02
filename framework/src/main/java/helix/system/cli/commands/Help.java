@@ -19,7 +19,7 @@ public class Help implements CliCommand
     {
         if(arguments.length == 0)
         {
-            context.registeredCommands().forEach((command, cliCommand) -> {
+            context.effectiveCommands().values().forEach(cliCommand -> {
                 printStream.println(cliCommand.command());
                 cliCommand.description(printStream);
                 printStream.println();
@@ -27,7 +27,7 @@ public class Help implements CliCommand
             return;
         }
 
-        CliCommand cliCommand = context.registeredCommands().get(arguments[0]);
+        CliCommand cliCommand = context.effectiveCommands().get(arguments[0]);
 
         if(cliCommand == null)
         {

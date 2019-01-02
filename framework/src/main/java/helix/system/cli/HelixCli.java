@@ -1,7 +1,11 @@
 package helix.system.cli;
 
+import helix.entryPoint.Genome;
 import helix.entryPoint.GenomeLoader;
+import helix.system.cli.commands.Exit;
 import helix.system.cli.commands.Help;
+import helix.system.cli.commands.Namespace;
+import helix.system.cli.namespaces.GenomeSequencer;
 
 import java.io.*;
 import java.util.Arrays;
@@ -14,6 +18,9 @@ public class HelixCli extends Thread
     private PrintStream outputStream;
 
     private Map<String, CliCommand> commands;
+    private Map<String, CliNamespace> namespaces;
+
+    private CliNamespace activeNamespace = null;
 
     private volatile boolean running;
 
@@ -26,7 +33,9 @@ public class HelixCli extends Thread
         outputStream = System.out;
         running = true;
         commands = new HashMap<>();
+        namespaces = new HashMap<>();
         registerInstalledCommands();
+        registerInstalledNamespaces();
     }
 
     /**
@@ -40,7 +49,9 @@ public class HelixCli extends Thread
         outputStream = out;
         running = true;
         commands = new HashMap<>();
+        namespaces = new HashMap<>();
         registerInstalledCommands();
+        registerInstalledNamespaces();
     }
 
     /**
@@ -54,7 +65,9 @@ public class HelixCli extends Thread
         outputStream = new PrintStream(out);
         running = true;
         commands = new HashMap<>();
+        namespaces = new HashMap<>();
         registerInstalledCommands();
+        registerInstalledNamespaces();
     }
 
     /**
@@ -63,8 +76,20 @@ public class HelixCli extends Thread
     private void registerInstalledCommands()
     {
         registerCommand(new Help());
+        registerCommand(new Namespace());
+        registerCommand(new Exit());
 
         GenomeLoader.registerCliCommands(this);
+    }
+
+    /**
+     * Regisrets Helix system namespaces as well as namespaces from all loaded Genomes
+     * **/
+    private void registerInstalledNamespaces()
+    {
+        registerNamespace(new GenomeSequencer());
+
+        GenomeLoader.registerCliNamespaces(this);
     }
 
     /**
@@ -75,9 +100,12 @@ public class HelixCli extends Thread
     {
         BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
 
-        try {
+        try
+        {
             printHeader();
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             //
         }
 
@@ -88,14 +116,16 @@ public class HelixCli extends Thread
             do
             {
                 outputStream.println();
-                if(line != null) execute(line);
+                if(line != null && !line.equals("")) execute(line);
 
-                outputStream.print("Helix>");
+                if(activeNamespace == null) outputStream.print("Helix>");
+                else outputStream.print("Helix(" + activeNamespace.name() + ")>");
             }
             while((line = br.readLine()) != null && running);
         }
         catch (Exception e)
         {
+            if(!running) return; // If the crash was caused by close() then we should ignore it
             close();
             outputStream.println("Helix CLI reader thread crashed. Restart the CLI session to retry.");
             e.printStackTrace(outputStream);
@@ -135,7 +165,7 @@ public class HelixCli extends Thread
             return;
         }
 
-        CliCommand cliCommand = commands.get(commandTokens[0]);
+        CliCommand cliCommand = effectiveCommands().get(commandTokens[0]);
 
         if(cliCommand == null)
         {
@@ -144,6 +174,16 @@ public class HelixCli extends Thread
         }
 
         execute(cliCommand, Arrays.copyOfRange(commandTokens, 1, commandTokens.length));
+    }
+
+    /**
+     * Returns a map of namespace-specific effective commands.
+     * @return Map of effective commands
+     * **/
+    public Map<String, CliCommand> effectiveCommands()
+    {
+        if(activeNamespace == null) return commands;
+        return activeNamespace.commands();
     }
 
     /**
@@ -167,6 +207,15 @@ public class HelixCli extends Thread
     }
 
     /**
+     * Registers one or more CLI namespaces and makes them available to the user
+     * @param cliNamespaces List of commands to register
+     * **/
+    public void registerNamespace(CliNamespace ...cliNamespaces)
+    {
+        for(CliNamespace cliNamespace : cliNamespaces) namespaces.put(cliNamespace.name(), cliNamespace);
+    }
+
+    /**
      * Prints the HELIX banner to the output print stream
      * @throws IOException If the banner can't be loaded
      * **/
@@ -184,11 +233,19 @@ public class HelixCli extends Thread
     }
 
     /**
-     * Closes the development CLI
+     * Closes the Helix CLI
      * **/
     public void close()
     {
         this.running = false;
+        try
+        {
+            inputStream.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace(outputStream);
+        }
     }
 
     /**
@@ -198,5 +255,30 @@ public class HelixCli extends Thread
     public Map<String, CliCommand> registeredCommands()
     {
         return commands;
+    }
+
+    /**
+     * Getter for all registered namespaces
+     * @return A map of all namespaces
+     * **/
+    public Map<String, CliNamespace> registeredNamespaces()
+    {
+        return namespaces;
+    }
+
+    /**
+     * Getter for the active namespace
+     * @return Active namespace in this context
+     * **/
+    public CliNamespace getActiveNamespace() {
+        return activeNamespace;
+    }
+
+    /**
+     * Setter for the active namespace in this context
+     * @param activeNamespace Next active namespace
+     * **/
+    public void setActiveNamespace(CliNamespace activeNamespace) {
+        this.activeNamespace = activeNamespace;
     }
 }

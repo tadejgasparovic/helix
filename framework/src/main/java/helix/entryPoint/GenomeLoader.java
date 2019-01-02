@@ -127,11 +127,20 @@ public class GenomeLoader
 
     /**
      * Invokes the registerCliCommands() Genome life-cycle method
-     * @param helixCli Helix CLI instance
+     * @param helixCli Command context
      * **/
     public static void registerCliCommands(HelixCli helixCli)
     {
         loadedGenomes.values().forEach(genome -> genome.registerCliCommands(helixCli));
+    }
+
+    /**
+     * Invokes the registerCliNamespaces() Genome life-cycle method
+     * @param helixCli Namespace context
+     * **/
+    public static void registerCliNamespaces(HelixCli helixCli)
+    {
+        loadedGenomes.values().forEach(genome ->genome.registerCliNamespaces(helixCli));
     }
 
     /**

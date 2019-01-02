@@ -19,8 +19,13 @@ public abstract class Genome
 
     /**
      * Should be overridden if the Genome wishes to publish any CLI commands
-     * @param helixCli DevelipmentCli instance to register the commands to
+     * @param helixCli Command context
      * **/
     public void registerCliCommands(HelixCli helixCli){}
 
+    /**
+     * Should be overridden if the Genome wishes to publish any CLI namespaces
+     * @param helixCli Namespace context
+     * **/
+    public void registerCliNamespaces(HelixCli helixCli){}
 }
