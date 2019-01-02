@@ -23,7 +23,7 @@ public class Zip
     public static void extract(File source, File target) throws IOException
     {
         if(source == null || !source.exists()) throw new FileNotFoundException("Source zip");
-        if(target == null || !target.isDirectory() || (!target.exists() && !target.mkdirs())) throw new FileNotFoundException("Target dir");
+        if(target == null || target.isFile() || (!target.exists() && !target.mkdirs())) throw new FileNotFoundException("Target dir");
 
         ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(source));
 

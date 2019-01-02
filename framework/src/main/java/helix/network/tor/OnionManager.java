@@ -5,7 +5,7 @@ import helix.exceptions.OnionGeneralFailure;
 import helix.exceptions.OnionSetupFailure;
 import helix.exceptions.TooManyHttpRedirects;
 import helix.exceptions.UnsupportedPlatform;
-import helix.system.HelixSystem;
+import helix.system.HelixKernel;
 import helix.toolkit.files.FileUtils;
 import helix.toolkit.network.HttpClient;
 import helix.toolkit.zip.Zip;
@@ -32,9 +32,9 @@ public class OnionManager
     /*
     * File system
     * */
-    private static final String TOR_ROOT = "./tor";
+    private static final String TOR_ROOT = "." + File.separator + "tor";
     private static final File TOR_ROOT_DIR = new File(TOR_ROOT);
-    private static final String TOR_INTEGRITY_STORE = "./.tor.hash";
+    private static final String TOR_INTEGRITY_STORE = "." + File.separator + ".tor.hash";
 
     /*
     * Tor proxy
@@ -51,10 +51,10 @@ public class OnionManager
     * Installation
     * */
     private static final int SETUP_FAILURE_LIMIT = 10;
-    private static final HelixSystem.OSName[] SUPPORTED_PLATFORMS = new HelixSystem.OSName[]
+    private static final HelixKernel.OSName[] SUPPORTED_PLATFORMS = new HelixKernel.OSName[]
     {
-            HelixSystem.OSName.WINDOWS,
-            HelixSystem.OSName.UNIX
+            HelixKernel.OSName.WINDOWS,
+            HelixKernel.OSName.UNIX
     };
 
     // TODO: Dinamically load the latest version
@@ -209,7 +209,7 @@ public class OnionManager
      * **/
     private static boolean isPlatformSupported()
     {
-        HelixSystem.OSName currentPlatform = HelixSystem.getNormalizedSystemName();
+        HelixKernel.OSName currentPlatform = HelixKernel.getNormalizedSystemName();
 
         boolean platformSupported = false;
 
@@ -333,10 +333,10 @@ public class OnionManager
      * **/
     private static String getTorCommand() throws UnsupportedPlatform
     {
-        switch(HelixSystem.getNormalizedSystemName())
+        switch(HelixKernel.getNormalizedSystemName())
         {
             case WINDOWS:
-                return TOR_ROOT_DIR.getAbsolutePath() + "/tor.exe";
+                return TOR_ROOT + File.separator + "Tor" + File.separator + "tor.exe";
 
             default:
                 throw new UnsupportedPlatform();
@@ -350,7 +350,7 @@ public class OnionManager
      * **/
     private static String getTorDownload()
     {
-        switch (HelixSystem.getNormalizedSystemName())
+        switch (HelixKernel.getNormalizedSystemName())
         {
             case WINDOWS: return TOR_DOWNLOAD_WINDOWS;
             default: return null;

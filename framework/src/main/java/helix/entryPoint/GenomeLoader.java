@@ -1,6 +1,8 @@
 package helix.entryPoint;
 
 import helix.exceptions.InvalidGenome;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,12 +17,17 @@ import java.util.Set;
 
 public class GenomeLoader
 {
+    private static final File GENOME_INSTALLATION_DIR = new File("./genomes/"); // TODO: Obfuscate dir name
 
     private static Map<String, Genome> loadedGenomes;
+
+    private static final Logger LOGGER = LogManager.getLogger(GenomeLoader.class);
 
     static
     {
         loadedGenomes = new HashMap<>();
+
+        if(!GENOME_INSTALLATION_DIR.exists()) GENOME_INSTALLATION_DIR.mkdir();
     }
 
     /**
@@ -110,19 +117,11 @@ public class GenomeLoader
     }
 
     /**
-     * Calls the onShutdown() genome life-cycle method
+     * Invokes the onShutdown() genome life-cycle method
      * **/
     public static void shutdown()
     {
         loadedGenomes.values().forEach(Genome::onShutdown);
-    }
-
-    /**
-     * Calls the onGracecfulShutdown() genome life-cycle method
-     * **/
-    public static void gracefulShutdown()
-    {
-        loadedGenomes.values().forEach(Genome::onGracefulShutdown);
     }
 
     /**
@@ -134,4 +133,41 @@ public class GenomeLoader
         return loadedGenomes.keySet();
     }
 
+    /**
+     * Loads all Genomes in the Genome installation directory
+     * **/
+    public static void loadInstalledGenomes()
+    {
+        LOGGER.debug("Loading installed Genomes...");
+        File[] genomeCandidates = GENOME_INSTALLATION_DIR.listFiles();
+
+        if(genomeCandidates == null) return;
+
+        for(File candidate : genomeCandidates)
+        {
+            String[] nameParts = candidate.getName().split(".");
+            if(!nameParts[nameParts.length - 1].trim().equals("jar")) return;
+
+            try
+            {
+                LOGGER.debug("Loading candidate {}...", candidate.getPath());
+                loadFromJar(candidate.getPath());
+                LOGGER.debug("Candidate {} loaded successfully!");
+            }
+            catch (InvalidGenome invalidGenome)
+            {
+                LOGGER.debug("Candidate failed to load!", invalidGenome);
+            }
+        }
+
+    }
+
+    /**
+     * Shuts down and unloads all Genomes
+     * **/
+    public static void unloadGenomes()
+    {
+        GenomeLoader.shutdown();
+        loadedGenomes.clear();
+    }
 }

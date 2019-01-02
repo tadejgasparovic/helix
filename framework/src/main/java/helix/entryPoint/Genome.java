@@ -12,7 +12,6 @@ public abstract class Genome {
     * */
     public abstract void onStartup();
     public abstract void onCommand(/* TODO: Pass the received command */);
-    public abstract void onShutdown(); // System shutdown event
-    public abstract void onGracefulShutdown(); // Graceful shutdown event (e.g. application update)
+    public abstract void onShutdown();
 
 }
