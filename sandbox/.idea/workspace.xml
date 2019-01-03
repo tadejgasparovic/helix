@@ -7,19 +7,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a6145487-5c8d-4fb8-bb19-4cb0cabade75" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/commands/sequencer/LoadGenome.java" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/src/main/java/CustomCommand.java" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/src/main/java/CustomNamespace.java" />
       <change beforePath="$PROJECT_DIR$/../.gitignore" afterPath="$PROJECT_DIR$/../.gitignore" />
-      <change beforePath="$PROJECT_DIR$/../framework/pom.xml" afterPath="$PROJECT_DIR$/../framework/pom.xml" />
-      <change beforePath="$PROJECT_DIR$/../framework/src/main/java/helix/entryPoint/GenomeLoader.java" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/entryPoint/GenomeLoader.java" />
-      <change beforePath="$PROJECT_DIR$/../framework/src/main/java/helix/system/HelixKernel.java" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/system/HelixKernel.java" />
       <change beforePath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/HelixCli.java" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/HelixCli.java" />
-      <change beforePath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/commands/sequencer/ListGenomes.java" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/commands/sequencer/ListGenomes.java" />
-      <change beforePath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/namespaces/GenomeSequencer.java" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/namespaces/GenomeSequencer.java" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" afterPath="$PROJECT_DIR$/pom.xml" />
-      <change beforePath="$PROJECT_DIR$/sandbox.iml" afterPath="$PROJECT_DIR$/sandbox.iml" />
-      <change beforePath="$PROJECT_DIR$/src/helix.conf" afterPath="$PROJECT_DIR$/src/helix.conf" />
       <change beforePath="$PROJECT_DIR$/src/main/java/Sandbox.java" afterPath="$PROJECT_DIR$/src/main/java/Sandbox.java" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
@@ -43,31 +35,39 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Sandbox.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Sandbox.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/Sandbox.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="748">
-              <caret line="22" column="0" lean-forward="false" selection-start-line="22" selection-start-column="0" selection-end-line="22" selection-end-column="0" />
+            <state relative-caret-position="1190">
+              <caret line="35" column="0" lean-forward="true" selection-start-line="35" selection-start-column="0" selection-end-line="35" selection-end-column="0" />
               <folding>
-                <element signature="e#97#98#0" expanded="true" />
-                <element signature="e#152#153#0" expanded="true" />
-                <element signature="e#183#184#0" expanded="true" />
-                <element signature="e#238#239#0" expanded="true" />
-                <element signature="e#276#277#0" expanded="true" />
-                <element signature="e#339#340#0" expanded="true" />
-                <element signature="e#371#372#0" expanded="true" />
-                <element signature="e#427#428#0" expanded="true" />
+                <element signature="imports" expanded="true" />
+                <element signature="e#131#132#0" expanded="true" />
+                <element signature="e#186#187#0" expanded="true" />
+                <element signature="e#217#218#0" expanded="true" />
+                <element signature="e#272#273#0" expanded="true" />
+                <element signature="e#310#311#0" expanded="true" />
+                <element signature="e#373#374#0" expanded="true" />
+                <element signature="e#405#406#0" expanded="true" />
+                <element signature="e#461#462#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="helix.conf" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/helix.conf">
+      <file leaf-file-name="CustomNamespace.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/CustomNamespace.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="68">
-              <caret line="2" column="17" lean-forward="true" selection-start-line="2" selection-start-column="17" selection-end-line="2" selection-end-column="17" />
-              <folding />
+            <state relative-caret-position="272">
+              <caret line="8" column="0" lean-forward="true" selection-start-line="8" selection-start-column="0" selection-end-line="8" selection-end-column="0" />
+              <folding>
+                <element signature="e#124#125#0" expanded="true" />
+                <element signature="e#176#177#0" expanded="true" />
+                <element signature="e#211#212#0" expanded="true" />
+                <element signature="e#289#290#0" expanded="true" />
+                <element signature="e#317#318#0" expanded="true" />
+                <element signature="e#358#359#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -93,8 +93,10 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/pom.xml" />
-        <option value="$PROJECT_DIR$/src/main/java/Sandbox.java" />
         <option value="$PROJECT_DIR$/src/helix.conf" />
+        <option value="$PROJECT_DIR$/src/main/java/CustomCommand.java" />
+        <option value="$PROJECT_DIR$/src/main/java/CustomNamespace.java" />
+        <option value="$PROJECT_DIR$/src/main/java/Sandbox.java" />
       </list>
     </option>
   </component>
@@ -374,14 +376,15 @@
         <state relative-caret-position="748">
           <caret line="22" column="0" lean-forward="true" selection-start-line="22" selection-start-column="0" selection-end-line="22" selection-end-column="0" />
           <folding>
-            <element signature="e#97#98#0" expanded="true" />
-            <element signature="e#152#153#0" expanded="true" />
-            <element signature="e#183#184#0" expanded="true" />
-            <element signature="e#238#239#0" expanded="true" />
-            <element signature="e#276#277#0" expanded="true" />
-            <element signature="e#339#340#0" expanded="true" />
-            <element signature="e#371#372#0" expanded="true" />
-            <element signature="e#427#428#0" expanded="true" />
+            <element signature="imports" expanded="true" />
+            <element signature="e#131#132#0" expanded="true" />
+            <element signature="e#186#187#0" expanded="true" />
+            <element signature="e#217#218#0" expanded="true" />
+            <element signature="e#272#273#0" expanded="true" />
+            <element signature="e#310#311#0" expanded="true" />
+            <element signature="e#373#374#0" expanded="true" />
+            <element signature="e#405#406#0" expanded="true" />
+            <element signature="e#461#462#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -399,14 +402,15 @@
         <state relative-caret-position="680">
           <caret line="20" column="5" lean-forward="true" selection-start-line="20" selection-start-column="5" selection-end-line="20" selection-end-column="5" />
           <folding>
-            <element signature="e#97#98#0" expanded="true" />
-            <element signature="e#152#153#0" expanded="true" />
-            <element signature="e#183#184#0" expanded="true" />
-            <element signature="e#238#239#0" expanded="true" />
-            <element signature="e#276#277#0" expanded="true" />
-            <element signature="e#339#340#0" expanded="true" />
-            <element signature="e#371#372#0" expanded="true" />
-            <element signature="e#427#428#0" expanded="true" />
+            <element signature="imports" expanded="true" />
+            <element signature="e#131#132#0" expanded="true" />
+            <element signature="e#186#187#0" expanded="true" />
+            <element signature="e#217#218#0" expanded="true" />
+            <element signature="e#272#273#0" expanded="true" />
+            <element signature="e#310#311#0" expanded="true" />
+            <element signature="e#373#374#0" expanded="true" />
+            <element signature="e#405#406#0" expanded="true" />
+            <element signature="e#461#462#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -424,14 +428,15 @@
         <state relative-caret-position="340">
           <caret line="18" column="49" lean-forward="true" selection-start-line="18" selection-start-column="49" selection-end-line="18" selection-end-column="49" />
           <folding>
-            <element signature="e#97#98#0" expanded="true" />
-            <element signature="e#152#153#0" expanded="true" />
-            <element signature="e#183#184#0" expanded="true" />
-            <element signature="e#238#239#0" expanded="true" />
-            <element signature="e#276#277#0" expanded="true" />
-            <element signature="e#339#340#0" expanded="true" />
-            <element signature="e#371#372#0" expanded="true" />
-            <element signature="e#427#428#0" expanded="true" />
+            <element signature="imports" expanded="true" />
+            <element signature="e#131#132#0" expanded="true" />
+            <element signature="e#186#187#0" expanded="true" />
+            <element signature="e#217#218#0" expanded="true" />
+            <element signature="e#272#273#0" expanded="true" />
+            <element signature="e#310#311#0" expanded="true" />
+            <element signature="e#373#374#0" expanded="true" />
+            <element signature="e#405#406#0" expanded="true" />
+            <element signature="e#461#462#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -444,19 +449,14 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/Sandbox.java">
+    <entry file="file://$PROJECT_DIR$/src/main/java/CustomCommand.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="748">
-          <caret line="22" column="0" lean-forward="false" selection-start-line="22" selection-start-column="0" selection-end-line="22" selection-end-column="0" />
+        <state relative-caret-position="714">
+          <caret line="21" column="5" lean-forward="true" selection-start-line="21" selection-start-column="5" selection-end-line="21" selection-end-column="5" />
           <folding>
-            <element signature="e#97#98#0" expanded="true" />
-            <element signature="e#152#153#0" expanded="true" />
-            <element signature="e#183#184#0" expanded="true" />
-            <element signature="e#238#239#0" expanded="true" />
-            <element signature="e#276#277#0" expanded="true" />
-            <element signature="e#339#340#0" expanded="true" />
-            <element signature="e#371#372#0" expanded="true" />
-            <element signature="e#427#428#0" expanded="true" />
+            <element signature="imports" expanded="false" />
+            <element signature="e#775#776#0" expanded="false" />
+            <element signature="e#814#815#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -466,6 +466,47 @@
         <state relative-caret-position="68">
           <caret line="2" column="17" lean-forward="true" selection-start-line="2" selection-start-column="17" selection-end-line="2" selection-end-column="17" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/../framework/target/framework-1.0-SNAPSHOT.jar!/helix/entryPoint/Genome.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="544">
+          <caret line="19" column="38" lean-forward="false" selection-start-line="19" selection-start-column="38" selection-end-line="19" selection-end-column="38" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/CustomNamespace.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="8" column="0" lean-forward="true" selection-start-line="8" selection-start-column="0" selection-end-line="8" selection-end-column="0" />
+          <folding>
+            <element signature="e#124#125#0" expanded="true" />
+            <element signature="e#176#177#0" expanded="true" />
+            <element signature="e#211#212#0" expanded="true" />
+            <element signature="e#289#290#0" expanded="true" />
+            <element signature="e#317#318#0" expanded="true" />
+            <element signature="e#358#359#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/Sandbox.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1190">
+          <caret line="35" column="0" lean-forward="true" selection-start-line="35" selection-start-column="0" selection-end-line="35" selection-end-column="0" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#131#132#0" expanded="true" />
+            <element signature="e#186#187#0" expanded="true" />
+            <element signature="e#217#218#0" expanded="true" />
+            <element signature="e#272#273#0" expanded="true" />
+            <element signature="e#310#311#0" expanded="true" />
+            <element signature="e#373#374#0" expanded="true" />
+            <element signature="e#405#406#0" expanded="true" />
+            <element signature="e#461#462#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

@@ -83,6 +83,8 @@ public class HelixCli extends Thread
         registerCommand(new Namespace());
         registerCommand(new Exit());
 
+        outputStream.println(GenomeLoader.loadedGenomes().size());
+
         GenomeLoader.registerCliCommands(this);
     }
 
