@@ -4,6 +4,7 @@ import helix.entryPoint.GenomeLoader;
 import helix.system.cli.commands.Exit;
 import helix.system.cli.commands.Help;
 import helix.system.cli.commands.Namespace;
+import helix.system.cli.commands.Reload;
 import helix.system.cli.namespaces.GenomeSequencer;
 
 import java.io.BufferedReader;
@@ -36,8 +37,6 @@ public class HelixCli extends Thread
         inputStream = System.in;
         outputStream = System.out;
         running = true;
-        commands = new HashMap<>();
-        namespaces = new HashMap<>();
         registerInstalledCommands();
         registerInstalledNamespaces();
     }
@@ -52,8 +51,6 @@ public class HelixCli extends Thread
         inputStream = in;
         outputStream = out;
         running = true;
-        commands = new HashMap<>();
-        namespaces = new HashMap<>();
         registerInstalledCommands();
         registerInstalledNamespaces();
     }
@@ -68,8 +65,6 @@ public class HelixCli extends Thread
         inputStream = in;
         outputStream = new PrintStream(out);
         running = true;
-        commands = new HashMap<>();
-        namespaces = new HashMap<>();
         registerInstalledCommands();
         registerInstalledNamespaces();
     }
@@ -77,13 +72,13 @@ public class HelixCli extends Thread
     /**
      * Registers Helix system commands as well as commands from all loaded Genomes
      * **/
-    private void registerInstalledCommands()
+    public void registerInstalledCommands()
     {
+        commands = new HashMap<>();
         registerCommand(new Help());
         registerCommand(new Namespace());
         registerCommand(new Exit());
-
-        outputStream.println(GenomeLoader.loadedGenomes().size());
+        registerCommand(new Reload());
 
         GenomeLoader.registerCliCommands(this);
     }
@@ -91,8 +86,9 @@ public class HelixCli extends Thread
     /**
      * Registers Helix system namespaces as well as namespaces from all loaded Genomes
      * **/
-    private void registerInstalledNamespaces()
+    public void registerInstalledNamespaces()
     {
+        namespaces = new HashMap<>();
         registerNamespace(new GenomeSequencer());
 
         GenomeLoader.registerCliNamespaces(this);
