@@ -20,7 +20,7 @@ import java.util.Set;
 
 public class GenomeLoader
 {
-    private static final File GENOME_INSTALLATION_DIR = new File("./genomes/"); // TODO: Obfuscate dir name
+    public static final File GENOME_INSTALLATION_DIR; // TODO: Obfuscate dir name
 
     private static Map<String, Genome> loadedGenomes;
 
@@ -29,6 +29,20 @@ public class GenomeLoader
     static
     {
         loadedGenomes = new HashMap<>();
+
+        File canonicalInstallationDir;
+        try
+        {
+            canonicalInstallationDir = new File("./genomes/").getCanonicalFile();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            canonicalInstallationDir = null;
+        }
+        GENOME_INSTALLATION_DIR = canonicalInstallationDir;
+
+        if(GENOME_INSTALLATION_DIR == null) throw new RuntimeException("Genome installation dir couldn't be resolved!");
 
         if(!GENOME_INSTALLATION_DIR.exists()) GENOME_INSTALLATION_DIR.mkdir();
     }
@@ -47,7 +61,7 @@ public class GenomeLoader
 
         URL fileURL;
         try {
-            fileURL = new URL("file://" + file.getAbsoluteFile().getPath());
+            fileURL = new URL("file://" + file.getCanonicalPath());
         } catch (MalformedURLException e) {
             throw new InvalidGenome();
         }
@@ -69,19 +83,20 @@ public class GenomeLoader
         String main = config.getProperty("main");
         String name = config.getProperty("name");
 
-        if(!file.getAbsoluteFile().getPath().startsWith(GENOME_INSTALLATION_DIR.getAbsoluteFile().getPath()))
+        if(!file.getAbsoluteFile().getPath().startsWith(GENOME_INSTALLATION_DIR.getPath()))
         {
+            System.out.println("Fire!");
             String installation = config.containsKey("installation") ? config.getProperty("installation") : "copy";
 
             switch (installation)
             {
                 case "copy":
-                    String installLocation = GENOME_INSTALLATION_DIR.getAbsoluteFile().getPath() + File.separator + file.getName();
+                    String installLocation = GENOME_INSTALLATION_DIR.getPath() + File.separator + file.getName();
                     Files.copy(Paths.get(filename), Paths.get(installLocation));
                     return loadFromJar(installLocation);
 
                 case "move":
-                    installLocation = GENOME_INSTALLATION_DIR.getAbsoluteFile().getPath() + File.separator + file.getName();
+                    installLocation = GENOME_INSTALLATION_DIR.getPath() + File.separator + file.getName();
                     Files.move(Paths.get(filename), Paths.get(installLocation));
                     return loadFromJar(installLocation);
 

@@ -2,6 +2,7 @@ package helix.toolkit.network;
 
 import helix.exceptions.TooManyHttpRedirects;
 import helix.exceptions.UnsupportedHttpVersion;
+import helix.toolkit.streams.StreamUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,6 +36,9 @@ public class HttpClient
     private int statusCode;
     private String reasonPhrase;
     private int totalRedirects;
+
+    private boolean persistContentLength;
+    private String contentLength;
 
     private static final Logger LOGGER = LogManager.getLogger(HttpClient.class);
 
@@ -76,7 +80,7 @@ public class HttpClient
      * **/
     public InputStream getResource(URL url) throws IOException, TooManyHttpRedirects
     {
-        return sendRequest(url, "GET", null, null, true);
+        return sendRequest(url, "GET", (byte[]) null, null, true);
     }
 
     /**
@@ -90,6 +94,41 @@ public class HttpClient
      * @throws IOException If the server can't be reached / resource doesn't exist
      * **/
     public InputStream sendRequest(URL url, String method, Map<String, String> postData, Map<String, String> headers, boolean followRedirects) throws IOException, TooManyHttpRedirects
+    {
+        boolean hasContent = postData != null && postData.size() > 0;
+
+        StringBuilder body = new StringBuilder();
+
+        if(hasContent)
+        {
+            postData.forEach((key, value) -> {
+                try {
+                    body.append(URLEncoder.encode(key, "UTF-8"));
+                    body.append("=");
+                    body.append(URLEncoder.encode(value, "UTF-8"));
+                    body.append("&");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            body.deleteCharAt(body.length() - 1);
+        }
+
+        return sendRequest(url, method, body.toString().getBytes(), headers, followRedirects);
+    }
+
+    /**
+     * Prepares and send an HTTP request
+     * @param url Resource URL
+     * @param method HTTP to be used
+     * @param postData HTTP request body content
+     * @param headers HTTP custom headers
+     * @param followRedirects If TRUE the HttpClient will automatically follow redirects
+     * @return The input stream of the resource
+     * @throws IOException If the server can't be reached / resource doesn't exist
+     * **/
+    public InputStream sendRequest(URL url, String method, byte[] postData, Map<String, String> headers, boolean followRedirects) throws IOException, TooManyHttpRedirects
     {
         finishRequest(); // First finish any previous request that might not have been finished by the user
 
@@ -115,40 +154,22 @@ public class HttpClient
      * Prepares the HTTP request
      * @param url Resource URL
      * @param method HTTP request method to be used
-     * @param postData HTTP POST key-value pairs
+     * @param postData HTTP request body content
      * @param headers HTTP custom headers
      * @return HTTP request string
      * **/
-    private String prepareRequest(URL url, String method, Map<String, String> postData, Map<String, String> headers)
+    private String prepareRequest(URL url, String method, byte[] postData, Map<String, String> headers)
     {
-        boolean hasContent = postData != null && postData.size() > 0;
-
-        StringBuilder body = new StringBuilder();
-
-        if(hasContent)
-        {
-            postData.forEach((key, value) -> {
-                try {
-                    body.append(URLEncoder.encode(key, "UTF-8"));
-                    body.append("=");
-                    body.append(URLEncoder.encode(value, "UTF-8"));
-                    body.append("&");
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-            });
-
-            body.deleteCharAt(body.length() - 1);
-        }
-
-
         StringBuilder resource = new StringBuilder();
         resource.append(url.getPath());
 
         if(resource.length() == 0) resource.append("/");
 
-        resource.append("?");
-        resource.append(url.getQuery());
+        if(url.getQuery() != null)
+        {
+            resource.append("?");
+            resource.append(url.getQuery());
+        }
 
 
         StringBuilder request = new StringBuilder();
@@ -171,8 +192,11 @@ public class HttpClient
 
         request.append("\r\n");
 
-        request.append(body);
-        request.append("\r\n");
+        if(postData != null)
+        {
+            request.append(new String(postData));
+            request.append("\r\n");
+        }
 
         return request.toString();
     }
@@ -183,13 +207,14 @@ public class HttpClient
      * **/
     private void parseResponseHeader(InputStream inputStream) throws IOException
     {
-        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-
-        String[] statusLine = br.readLine().split(" ");
+        String[] statusLine = StreamUtils.readLine(inputStream).split(" ");
 
         if(statusLine.length < 3) throw new IOException("Invalid status line");
 
         if(!statusLine[0].equals("HTTP/" + VERSION)) throw new UnsupportedHttpVersion(statusLine[0]);
+
+        // Persist the content length in case we need it later
+        contentLength = headers != null ? headers.getOrDefault("Content-Length", contentLength) : contentLength;
 
         headers = new HashMap<>();
         statusCode = Integer.parseInt(statusLine[1]);
@@ -200,7 +225,7 @@ public class HttpClient
 
         String line;
 
-        while((line = br.readLine()) != null && !line.equals(""))
+        while((line = StreamUtils.readLine(inputStream)) != null && !line.equals(""))
         {
             String[] header = line.split(":");
 
@@ -213,6 +238,10 @@ public class HttpClient
 
             headers.put(normalizeHeaderName(header[0]), value.toString().trim());
         }
+
+        // If we're parsing the result of a redirect and this response doesn't contain the content length
+        // we should use the persisted content length
+        if(persistContentLength && !headers.containsKey("Content-Length")) headers.put("Content-Length", contentLength);
     }
 
     /**
@@ -223,7 +252,7 @@ public class HttpClient
      * @param headers Last request headers
      * @throws IOException If the redirect fails
      * **/
-    private void handleRedirects(URL url, String method, Map<String, String> postData, Map<String, String> headers) throws IOException, TooManyHttpRedirects
+    private void handleRedirects(URL url, String method, byte[] postData, Map<String, String> headers) throws IOException, TooManyHttpRedirects
     {
         Set<String> keys = this.headers.keySet();
 
@@ -290,6 +319,8 @@ public class HttpClient
         {
             throw new IOException("Invalid redirect");
         }
+
+        persistContentLength = true;
 
         String request = prepareRequest(url, method, postData, headers);
 
@@ -375,6 +406,9 @@ public class HttpClient
      * **/
     public void finishRequest() throws IOException
     {
+        persistContentLength = false;
+        contentLength = "";
+
         if(httpSocket != null)
         {
             if(httpSocket.isConnected() && !httpSocket.isClosed()) httpSocket.close();
@@ -425,5 +459,14 @@ public class HttpClient
     public long getContentLength()
     {
         return Long.parseLong(headers.get("Content-Length"));
+    }
+
+    /**
+     * Returns the transfer encoding
+     * @return Transfer encoding header value
+     * **/
+    public String getTransferEncoding()
+    {
+        return headers.getOrDefault("Transfer-Encoding", "identity");
     }
 }

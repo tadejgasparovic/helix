@@ -1,6 +1,10 @@
 package helix.crypto;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -10,6 +14,43 @@ import java.util.Set;
 public class FileDigest {
 
     public static final byte[] EMPTY_HASH = new byte[32];
+
+    /**
+     * Checks the integrity of a file by comparing its SHA-256 hash
+     * @param file File to check
+     * @param sha256digest SHA-256 hash to compare against
+     * @throws IOException If the digest fails
+     * @throws NoSuchAlgorithmException If SHA-256 isn't found on the system
+     * **/
+    public static boolean integrityCheck(File file, byte[] sha256digest) throws IOException, NoSuchAlgorithmException
+    {
+        byte[] hash = digest(file);
+
+        return Arrays.equals(hash, sha256digest);
+    }
+
+    /**
+     * Checks the integrity of the file by comparing its SHA-256 hash against a hex encoded hash
+     * @param file File to check
+     * @param sha256digest SHA-256 hex encoded hash to compare against
+     * @throws IOException If the digest fails
+     * @throws NoSuchAlgorithmException If SHA-256 isn't found on the system
+     * **/
+    public static boolean integrityCheck(File file, String sha256digest) throws IOException, NoSuchAlgorithmException
+    {
+        if(sha256digest.length() != 64) return false;
+
+        byte[] decodedDigest = new byte[sha256digest.length() / 2];
+
+        for(int i = 0; i < sha256digest.length(); i += 2) // Decode hex to bytes
+        {
+            byte MSNibble = (byte) Character.digit(sha256digest.charAt(i), 16);
+            byte LSNibble = (byte) Character.digit(sha256digest.charAt(i + 1), 16);
+            decodedDigest[i / 2] = (byte) (MSNibble << 4 | LSNibble);
+        }
+
+        return integrityCheck(file, decodedDigest);
+    }
 
     /**
      * Digests a file using SHA-256

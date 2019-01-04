@@ -6,6 +6,7 @@ import helix.system.cli.commands.Help;
 import helix.system.cli.commands.Namespace;
 import helix.system.cli.commands.Reload;
 import helix.system.cli.namespaces.GenomeSequencer;
+import helix.system.cli.namespaces.Network;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -28,6 +29,9 @@ public class HelixCli extends Thread
     private CliNamespace activeNamespace = null;
 
     private volatile boolean running;
+    private volatile boolean multilineInput;
+
+    private CliCommand activeCommand = null;
 
     /**
      * Creates a new HelixCli instance bound to stdio
@@ -37,6 +41,7 @@ public class HelixCli extends Thread
         inputStream = System.in;
         outputStream = System.out;
         running = true;
+        multilineInput = false;
         registerInstalledCommands();
         registerInstalledNamespaces();
     }
@@ -51,6 +56,7 @@ public class HelixCli extends Thread
         inputStream = in;
         outputStream = out;
         running = true;
+        multilineInput = false;
         registerInstalledCommands();
         registerInstalledNamespaces();
     }
@@ -65,6 +71,7 @@ public class HelixCli extends Thread
         inputStream = in;
         outputStream = new PrintStream(out);
         running = true;
+        multilineInput = false;
         registerInstalledCommands();
         registerInstalledNamespaces();
     }
@@ -90,6 +97,7 @@ public class HelixCli extends Thread
     {
         namespaces = new HashMap<>();
         registerNamespace(new GenomeSequencer());
+        registerNamespace(new Network());
 
         GenomeLoader.registerCliNamespaces(this);
     }
@@ -282,5 +290,23 @@ public class HelixCli extends Thread
      * **/
     public void setActiveNamespace(CliNamespace activeNamespace) {
         this.activeNamespace = activeNamespace;
+    }
+
+    /**
+     * Is multiline input enabled?
+     * @return TRUE if multiline input is enabled
+     * **/
+    public boolean isMultilineInput()
+    {
+        return multilineInput;
+    }
+
+    /**
+     * Enables / disables multiline input
+     * @param multilineInput Value to set multiline input to
+     * **/
+    public void setMultilineInput(boolean multilineInput)
+    {
+        this.multilineInput = multilineInput;
     }
 }
