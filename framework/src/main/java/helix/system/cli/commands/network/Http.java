@@ -155,19 +155,17 @@ public class Http implements CliCommand
 
         if(contentType.startsWith("text/") && !forceDownload)
         {
-            BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-
             long read = 0L;
 
-            String line;
+            int nextByte;
 
-            while((line = br.readLine()) != null && read < contentLength)
+            while((nextByte = inputStream.read()) > -1 && read < contentLength)
             {
-                read += line.length();
-                printStream.println(line);
+                read++;
+                printStream.write(nextByte);
             }
 
-            br.close();
+            inputStream.close();
 
             if(read != contentLength)
             {

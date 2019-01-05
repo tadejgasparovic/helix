@@ -184,9 +184,13 @@ public class HttpClient
         if(headers == null) headers = new HashMap<>();
 
         // Set default headers
-        headers.put("User-Agent", userAgent);
-        headers.put("Host", url.getHost());
-        headers.put("Connection", "close");
+        headers.putIfAbsent("User-Agent", userAgent);
+        headers.putIfAbsent("Host", url.getHost());
+        headers.putIfAbsent("Accept", "*");
+        headers.putIfAbsent("Accept-Charset", "*");
+        headers.putIfAbsent("Accept-Encoding", "identity");
+        headers.putIfAbsent("Accept-Language", "*");
+        headers.putIfAbsent("Connection", "close");
 
         headers.forEach((key, value) -> request.append(normalizeHeaderName(key)).append(": ").append(value).append("\r\n"));
 
@@ -218,6 +222,7 @@ public class HttpClient
 
         headers = new HashMap<>();
         statusCode = Integer.parseInt(statusLine[1]);
+        reasonPhrase = "";
 
         // Reason phrase can contain spaces so we need to reassemble all the parts
         for(int i = 2; i < statusLine.length; i++) reasonPhrase += statusLine[i] + " ";
@@ -227,16 +232,8 @@ public class HttpClient
 
         while((line = StreamUtils.readLine(inputStream)) != null && !line.equals(""))
         {
-            String[] header = line.split(":");
-
-            StringBuilder value = new StringBuilder();
-            for(int i = 1; i < header.length; i++)
-            {
-                if(i > 1) value.append(":");
-                value.append(header[i]);
-            }
-
-            headers.put(normalizeHeaderName(header[0]), value.toString().trim());
+            int separatorIdx = line.indexOf(':');
+            headers.put(normalizeHeaderName(line.substring(0, separatorIdx)), line.substring(separatorIdx + 1).trim());
         }
 
         // If we're parsing the result of a redirect and this response doesn't contain the content length
@@ -458,7 +455,7 @@ public class HttpClient
      * **/
     public long getContentLength()
     {
-        return Long.parseLong(headers.get("Content-Length"));
+        return Long.parseLong(headers.getOrDefault("Content-Length", "0"));
     }
 
     /**

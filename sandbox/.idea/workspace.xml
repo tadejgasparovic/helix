@@ -7,18 +7,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a6145487-5c8d-4fb8-bb19-4cb0cabade75" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/commands/network/Http.java" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/commands/sequencer/UnloadGenome.java" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/namespaces/Network.java" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/toolkit/streams/StreamUtils.java" />
       <change beforePath="$PROJECT_DIR$/../.gitignore" afterPath="$PROJECT_DIR$/../.gitignore" />
-      <change beforePath="$PROJECT_DIR$/../framework/src/main/java/helix/crypto/FileDigest.java" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/crypto/FileDigest.java" />
-      <change beforePath="$PROJECT_DIR$/../framework/src/main/java/helix/entryPoint/GenomeLoader.java" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/entryPoint/GenomeLoader.java" />
-      <change beforePath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/CliCommand.java" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/CliCommand.java" />
-      <change beforePath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/HelixCli.java" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/HelixCli.java" />
-      <change beforePath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/commands/sequencer/LoadGenome.java" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/system/cli/commands/sequencer/LoadGenome.java" />
-      <change beforePath="$PROJECT_DIR$/../framework/src/main/java/helix/toolkit/network/HttpClient.java" afterPath="$PROJECT_DIR$/../framework/src/main/java/helix/toolkit/network/HttpClient.java" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/target/" />
