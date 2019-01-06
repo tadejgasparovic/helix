@@ -151,49 +151,27 @@ public class Http implements CliCommand
 
         String contentType = httpClient.getHeaders().get("Content-Type");
 
-        long contentLength = httpClient.getContentLength();
-
         if(contentType.startsWith("text/") && !forceDownload)
         {
-            long read = 0L;
+            int read;
 
-            int nextByte;
+            while((read = inputStream.read()) > -1) printStream.write(read);
 
-            while((nextByte = inputStream.read()) > -1 && read < contentLength)
-            {
-                read++;
-                printStream.write(nextByte);
-            }
-
+            printStream.println();
+            printStream.flush();
             inputStream.close();
-
-            if(read != contentLength)
-            {
-                printStream.print("File failed to download. Expected ");
-                printStream.print(contentLength);
-                printStream.print(" bytes but got ");
-                printStream.println(read);
-                httpClient.finishRequest();
-                return;
-            }
         }
         else
         {
-            Path downloadPath = Paths.get("./" + (url.getFile().startsWith("/") ? url.getFile().substring(1) : url.getFile()));
+            String filename = (url.getFile().startsWith("/") ? url.getFile().substring(1) : url.getFile());
+
+            if(filename.length() < 1) filename = "index"; // TODO: Map Content-Type to file extension
+
+            Path downloadPath = Paths.get("./" + filename);
 
             Files.copy(inputStream, downloadPath);
 
             inputStream.close();
-
-            if(downloadPath.toFile().length() != contentLength)
-            {
-                printStream.print("File failed to download. Expected ");
-                printStream.print(contentLength);
-                printStream.print(" bytes but got ");
-                printStream.println(downloadPath.toFile().length());
-                httpClient.finishRequest();
-                return;
-            }
         }
 
         httpClient.finishRequest();

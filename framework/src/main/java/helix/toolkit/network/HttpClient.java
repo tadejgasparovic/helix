@@ -2,6 +2,8 @@ package helix.toolkit.network;
 
 import helix.exceptions.TooManyHttpRedirects;
 import helix.exceptions.UnsupportedHttpVersion;
+import helix.toolkit.network.decoders.ChunkedDecoderStream;
+import helix.toolkit.network.decoders.IdentityDecoderStream;
 import helix.toolkit.streams.StreamUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,6 +41,8 @@ public class HttpClient
 
     private boolean persistContentLength;
     private String contentLength;
+
+    private Map<String, String> requestHeaders;
 
     private static final Logger LOGGER = LogManager.getLogger(HttpClient.class);
 
@@ -147,7 +151,33 @@ public class HttpClient
         parseResponseHeader(httpSocket.getInputStream());
         if(followRedirects) handleRedirects(url, method, postData, headers);
 
-        return httpSocket.getInputStream();
+        return makeStreamDecoder();
+    }
+
+    /**
+     * Wraps the socket's InputStream into the appropriate decoder stream
+     * based on the transfer encoding and content encoding.
+     * @return Wrapped InputStream or null
+     * **/
+    private InputStream makeStreamDecoder() throws IOException
+    {
+        switch (getTransferEncoding())
+        {
+            case "identity":
+                long contentLength = isConnectionCloseRequested() ? IdentityDecoderStream.READ_UNTIL_EOS : getContentLength();
+                return new IdentityDecoderStream(httpSocket.getInputStream(), contentLength);
+
+            case "chunked":
+                return new ChunkedDecoderStream(httpSocket.getInputStream(), isConnectionCloseRequested());
+
+            default: return null;
+        }
+    }
+
+    private boolean isConnectionCloseRequested()
+    {
+        String defaultValue = requestHeaders.getOrDefault("Connection", "close");
+        return headers.getOrDefault("Connection", defaultValue).toLowerCase().equals("close");
     }
 
     /**
@@ -184,13 +214,15 @@ public class HttpClient
         if(headers == null) headers = new HashMap<>();
 
         // Set default headers
-        headers.putIfAbsent("User-Agent", userAgent);
-        headers.putIfAbsent("Host", url.getHost());
+        headers.put("User-Agent", userAgent); // Force put to override any user-set values
+        headers.put("Host", url.getHost()); // Force put to override any user-set values
         headers.putIfAbsent("Accept", "*");
         headers.putIfAbsent("Accept-Charset", "*");
         headers.putIfAbsent("Accept-Encoding", "identity");
         headers.putIfAbsent("Accept-Language", "*");
         headers.putIfAbsent("Connection", "close");
+
+        requestHeaders = headers;
 
         headers.forEach((key, value) -> request.append(normalizeHeaderName(key)).append(": ").append(value).append("\r\n"));
 
@@ -464,6 +496,6 @@ public class HttpClient
      * **/
     public String getTransferEncoding()
     {
-        return headers.getOrDefault("Transfer-Encoding", "identity");
+        return headers.getOrDefault("Transfer-Encoding", "identity").toLowerCase();
     }
 }
