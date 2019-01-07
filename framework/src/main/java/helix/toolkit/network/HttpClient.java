@@ -34,7 +34,7 @@ public class HttpClient
 
     private Socket httpSocket;
 
-    private Map<String, String> headers;
+    private Map<String, String> responseHeaders;
     private int statusCode;
     private String reasonPhrase;
     private int totalRedirects;
@@ -92,7 +92,7 @@ public class HttpClient
      * @param url Resource URL
      * @param method HTTP to be used
      * @param postData HTTP POST key-value pairs
-     * @param headers HTTP custom headers
+     * @param headers HTTP custom responseHeaders
      * @param followRedirects If TRUE the HttpClient will automatically follow redirects
      * @return The input stream of the resource
      * @throws IOException If the server can't be reached / resource doesn't exist
@@ -127,7 +127,7 @@ public class HttpClient
      * @param url Resource URL
      * @param method HTTP to be used
      * @param postData HTTP request body content
-     * @param headers HTTP custom headers
+     * @param headers HTTP custom responseHeaders
      * @param followRedirects If TRUE the HttpClient will automatically follow redirects
      * @return The input stream of the resource
      * @throws IOException If the server can't be reached / resource doesn't exist
@@ -177,7 +177,7 @@ public class HttpClient
     private boolean isConnectionCloseRequested()
     {
         String defaultValue = requestHeaders.getOrDefault("Connection", "close");
-        return headers.getOrDefault("Connection", defaultValue).toLowerCase().equals("close");
+        return responseHeaders.getOrDefault("Connection", defaultValue).toLowerCase().equals("close");
     }
 
     /**
@@ -185,7 +185,7 @@ public class HttpClient
      * @param url Resource URL
      * @param method HTTP request method to be used
      * @param postData HTTP request body content
-     * @param headers HTTP custom headers
+     * @param headers HTTP custom responseHeaders
      * @return HTTP request string
      * **/
     private String prepareRequest(URL url, String method, byte[] postData, Map<String, String> headers)
@@ -212,19 +212,23 @@ public class HttpClient
         request.append("\r\n");
 
         if(headers == null) headers = new HashMap<>();
+        if(requestHeaders == null) requestHeaders = new HashMap<>();
 
-        // Set default headers
-        headers.put("User-Agent", userAgent); // Force put to override any user-set values
-        headers.put("Host", url.getHost()); // Force put to override any user-set values
-        headers.putIfAbsent("Accept", "*");
-        headers.putIfAbsent("Accept-Charset", "*");
-        headers.putIfAbsent("Accept-Encoding", "identity");
-        headers.putIfAbsent("Accept-Language", "*");
-        headers.putIfAbsent("Connection", "close");
+        Set<String> keys = headers.keySet();
 
-        requestHeaders = headers;
+        // Normalize all header names
+        for(String key : keys) requestHeaders.put(normalizeHeaderName(key), headers.get(key));
 
-        headers.forEach((key, value) -> request.append(normalizeHeaderName(key)).append(": ").append(value).append("\r\n"));
+        // Set default responseHeaders
+        requestHeaders.put("User-Agent", userAgent); // Force put to override any user-set values
+        requestHeaders.put("Host", url.getHost()); // Force put to override any user-set values
+        requestHeaders.putIfAbsent("Accept", "*");
+        requestHeaders.putIfAbsent("Accept-Charset", "*");
+        requestHeaders.putIfAbsent("Accept-Encoding", "identity");
+        requestHeaders.putIfAbsent("Accept-Language", "*");
+        requestHeaders.putIfAbsent("Connection", "close");
+
+        requestHeaders.forEach((key, value) -> request.append(key).append(": ").append(value).append("\r\n"));
 
         request.append("\r\n");
 
@@ -250,9 +254,9 @@ public class HttpClient
         if(!statusLine[0].equals("HTTP/" + VERSION)) throw new UnsupportedHttpVersion(statusLine[0]);
 
         // Persist the content length in case we need it later
-        contentLength = headers != null ? headers.getOrDefault("Content-Length", contentLength) : contentLength;
+        contentLength = responseHeaders != null ? responseHeaders.getOrDefault("Content-Length", contentLength) : contentLength;
 
-        headers = new HashMap<>();
+        responseHeaders = new HashMap<>();
         statusCode = Integer.parseInt(statusLine[1]);
         reasonPhrase = "";
 
@@ -265,12 +269,12 @@ public class HttpClient
         while((line = StreamUtils.readLine(inputStream)) != null && !line.equals(""))
         {
             int separatorIdx = line.indexOf(':');
-            headers.put(normalizeHeaderName(line.substring(0, separatorIdx)), line.substring(separatorIdx + 1).trim());
+            responseHeaders.put(normalizeHeaderName(line.substring(0, separatorIdx)), line.substring(separatorIdx + 1).trim());
         }
 
         // If we're parsing the result of a redirect and this response doesn't contain the content length
         // we should use the persisted content length
-        if(persistContentLength && !headers.containsKey("Content-Length")) headers.put("Content-Length", contentLength);
+        if(persistContentLength && !responseHeaders.containsKey("Content-Length")) responseHeaders.put("Content-Length", contentLength);
     }
 
     /**
@@ -278,15 +282,15 @@ public class HttpClient
      * @param url Last request URL
      * @param method Last request method
      * @param postData Last request post data
-     * @param headers Last request headers
+     * @param headers Last request responseHeaders
      * @throws IOException If the redirect fails
      * **/
     private void handleRedirects(URL url, String method, byte[] postData, Map<String, String> headers) throws IOException, TooManyHttpRedirects
     {
-        Set<String> keys = this.headers.keySet();
+        Set<String> keys = this.responseHeaders.keySet();
 
         LOGGER.debug("Status code: {}", getStatusCode());
-        for(String key : keys) LOGGER.debug("{}: {}", key, this.headers.get(key));
+        for(String key : keys) LOGGER.debug("{}: {}", key, this.responseHeaders.get(key));
 
         switch (getStatusCode())
         {
@@ -314,7 +318,7 @@ public class HttpClient
 
         totalRedirects++;
 
-        String nextLocation = this.headers.get("Location");
+        String nextLocation = this.responseHeaders.get("Location");
 
         if(nextLocation.startsWith("/")) // Redirected to just a different URI?
         {
@@ -473,12 +477,12 @@ public class HttpClient
     }
 
     /**
-     * Returns the response headers
-     * @return The response headers of the last request
+     * Returns the response responseHeaders
+     * @return The response responseHeaders of the last request
      * **/
-    public Map<String, String> getHeaders()
+    public Map<String, String> getResponseHeaders()
     {
-        return headers;
+        return responseHeaders;
     }
 
     /**
@@ -487,7 +491,7 @@ public class HttpClient
      * **/
     public long getContentLength()
     {
-        return Long.parseLong(headers.getOrDefault("Content-Length", "0"));
+        return Long.parseLong(responseHeaders.getOrDefault("Content-Length", "0"));
     }
 
     /**
@@ -496,6 +500,6 @@ public class HttpClient
      * **/
     public String getTransferEncoding()
     {
-        return headers.getOrDefault("Transfer-Encoding", "identity").toLowerCase();
+        return responseHeaders.getOrDefault("Transfer-Encoding", "identity").toLowerCase();
     }
 }

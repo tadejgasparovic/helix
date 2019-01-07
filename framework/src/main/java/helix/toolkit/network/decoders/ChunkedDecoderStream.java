@@ -38,8 +38,8 @@ public class ChunkedDecoderStream extends InputStream
         {
             if(lastChunkByte > 0)
             {
-                // Skip 2xCRLF at the end of the last chunk
-                for(int i = 0; i < 4; i++) inputStream.read();
+                // Skip CRLF at the end of the last chunk
+                for(int i = 0; i < 2; i++) inputStream.read();
             }
 
             // Expecting the next line to contain the chunk length in hex

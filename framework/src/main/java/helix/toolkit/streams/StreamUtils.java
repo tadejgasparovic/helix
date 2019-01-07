@@ -33,7 +33,7 @@ public class StreamUtils
 
         StringBuilder partialDelimBuffer = new StringBuilder();
 
-        while((read = inputStream.read()) > 0 && delimIdx < delim.length() - 1)
+        while((read = inputStream.read()) > -1 && delimIdx < delim.length() - 1)
         {
             if(read == delim.charAt(delimIdx))
             {

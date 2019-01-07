@@ -149,7 +149,7 @@ public class Http implements CliCommand
             return;
         }
 
-        String contentType = httpClient.getHeaders().get("Content-Type");
+        String contentType = httpClient.getResponseHeaders().get("Content-Type");
 
         if(contentType.startsWith("text/") && !forceDownload)
         {
@@ -169,7 +169,20 @@ public class Http implements CliCommand
 
             Path downloadPath = Paths.get("./" + filename);
 
-            Files.copy(inputStream, downloadPath);
+            Files.createFile(downloadPath);
+
+            File f = downloadPath.toFile();
+
+            FileOutputStream fos = new FileOutputStream(f);
+
+            int read;
+
+            while((read = inputStream.read()) > -1) fos.write(read);
+
+            fos.flush();
+            fos.close();
+
+            //Files.copy(inputStream, downloadPath);
 
             inputStream.close();
         }
