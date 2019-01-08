@@ -2,6 +2,7 @@ package helix.system.cli;
 
 import helix.system.cli.commands.Exit;
 import helix.system.cli.commands.Help;
+import helix.system.cli.commands.Namespace;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,8 +17,7 @@ public abstract class CliNamespace
     public CliNamespace()
     {
         commands = new HashMap<>();
-        commands.put("exit", new Exit());
-        commands.put("help", new Help());
+        registerCommand(new Exit(), new Help(), new Namespace());
     }
 
     /**

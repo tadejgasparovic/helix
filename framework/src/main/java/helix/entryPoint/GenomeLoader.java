@@ -83,9 +83,10 @@ public class GenomeLoader
         String main = config.getProperty("main");
         String name = config.getProperty("name");
 
+        if(loadedGenomes.containsKey(name)) throw new InvalidGenome("Genome already loaded");
+
         if(!file.getAbsoluteFile().getPath().startsWith(GENOME_INSTALLATION_DIR.getPath()))
         {
-            System.out.println("Fire!");
             String installation = config.containsKey("installation") ? config.getProperty("installation") : "copy";
 
             switch (installation)
@@ -224,5 +225,21 @@ public class GenomeLoader
     {
         GenomeLoader.shutdown();
         loadedGenomes.clear();
+    }
+
+    /**
+     * Unloads one or moe genomes
+     * @param genomes Genome names
+     * **/
+    public static void unloadGenome(String ...genomes)
+    {
+        for(String genomeName : genomes)
+        {
+            Genome genome = loadedGenomes.get(genomeName);
+            if(genome == null) continue;
+
+            genome.onShutdown();
+            loadedGenomes.remove(genomeName);
+        }
     }
 }

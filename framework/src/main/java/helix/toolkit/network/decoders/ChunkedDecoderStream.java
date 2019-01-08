@@ -34,6 +34,8 @@ public class ChunkedDecoderStream extends InputStream
     @Override
     public int read() throws IOException
     {
+        // Only if the connection is requested to be kept alive the server will prepend each chunk with
+        // the chunk length in hex and CRLF
         if(!connectionCloseRequested && lastChunkByte == currentChunkLength)
         {
             if(lastChunkByte > 0)

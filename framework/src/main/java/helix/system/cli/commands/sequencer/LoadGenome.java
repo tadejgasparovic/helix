@@ -82,7 +82,7 @@ public class LoadGenome implements CliCommand
         catch (InvalidGenome | IOException | RuntimeException | NoSuchAlgorithmException | TooManyHttpRedirects e)
         {
             printStream.println("Genome failed to load!");
-            printStream.println(e.getMessage());
+            printStream.println(e.getClass().getName() + ": " + e.getMessage());
         }
     }
 
