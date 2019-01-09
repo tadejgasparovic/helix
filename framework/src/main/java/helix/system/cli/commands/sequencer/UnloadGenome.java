@@ -5,6 +5,7 @@ import helix.system.cli.CliCommand;
 import helix.system.cli.HelixCli;
 
 import java.io.PrintStream;
+import java.util.Arrays;
 
 public class UnloadGenome implements CliCommand
 {
@@ -14,24 +15,30 @@ public class UnloadGenome implements CliCommand
         if(arguments.length < 1)
         {
             printStream.println("You need to specify at least one Genome to unload!");
+            printStream.println("Reserved Genome name 'all' will unload all genomes");
+            usage(printStream);
             return;
         }
 
-        GenomeLoader.unloadGenome(arguments);
+        Arrays.sort(arguments);
+
+        if(Arrays.binarySearch(arguments, "all") >= 0) GenomeLoader.unloadGenomes();
+        else GenomeLoader.unloadGenome(arguments);
+
         printStream.println("Genomes unloaded!");
     }
 
     @Override
     public void description(PrintStream printStream)
     {
-        printStream.println("Unloads one or more Genomes");
+        printStream.println("Unloads one, multiple or all Genomes");
     }
 
     @Override
     public void usage(PrintStream printStream)
     {
         printStream.print(command());
-        printStream.println(" <genomeName> [...]");
+        printStream.println(" <genomeName|all> [genomeName...]");
     }
 
     @Override
