@@ -97,7 +97,7 @@ public class HelixKernel
     {
         // TODO: Kill CNC connection
 
-        GenomeLoader.unloadGenomes();
+        GenomeLoader.unloadAllGenomes();
 
         helixCli.close();
         helixCli = null;

@@ -4,34 +4,44 @@ import helix.entryPoint.GenomeLoader;
 import helix.system.cli.CliCommand;
 import helix.system.cli.HelixCli;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
 
-public class UnloadGenome implements CliCommand
+public class UninstallGenome implements CliCommand
 {
     @Override
     public void execute(HelixCli context, PrintStream printStream, String... arguments)
     {
         if(arguments.length < 1)
         {
-            printStream.println("You need to specify at least one Genome to unload!");
-            printStream.println("Reserved Genome name 'all' will unload all Genomes");
+            printStream.println("You need to specify at least one Genome to uninstall!");
+            printStream.println("Reserved Genome name 'all' will uninstall all Genomes");
             usage(printStream);
             return;
         }
 
         Arrays.sort(arguments);
 
-        if(Arrays.binarySearch(arguments, "all") >= 0) GenomeLoader.unloadAllGenomes();
-        else GenomeLoader.unloadGenome(arguments);
+        try
+        {
+            if(Arrays.binarySearch(arguments, "all") >= 0) GenomeLoader.uninstallAllGenomes();
+            else GenomeLoader.uninstallGenome(arguments);
+        }
+        catch (IOException e)
+        {
+            printStream.println("Couldn't uninstall Genome(s)!");
+            printStream.println(e);
+            return;
+        }
 
-        printStream.println("Genomes unloaded!");
+        printStream.println("Genomes uninstalled!");
     }
 
     @Override
     public void description(PrintStream printStream)
     {
-        printStream.println("Unloads one, multiple or all Genomes");
+        printStream.println("Uninstalls one, multiple or all Genomes");
     }
 
     @Override
@@ -44,6 +54,6 @@ public class UnloadGenome implements CliCommand
     @Override
     public String command()
     {
-        return "unload";
+        return "uninstall";
     }
 }

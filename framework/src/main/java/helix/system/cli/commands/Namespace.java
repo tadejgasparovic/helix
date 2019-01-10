@@ -51,7 +51,7 @@ public class Namespace implements CliCommand
     @Override
     public void description(PrintStream printStream)
     {
-        printStream.println("Lets you switch between namespaces.");
+        printStream.println("Lets you switch between namespaces");
     }
 
     @Override

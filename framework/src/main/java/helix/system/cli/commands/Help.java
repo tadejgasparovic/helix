@@ -47,7 +47,7 @@ public class Help implements CliCommand
     @Override
     public void description(PrintStream printStream)
     {
-        printStream.println("View a list of all commands or usage instructions for a command.");
+        printStream.println("View a list of all commands or usage instructions for a command");
     }
 
     /**

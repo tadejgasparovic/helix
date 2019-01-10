@@ -13,6 +13,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.CodeSource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -221,14 +222,14 @@ public class GenomeLoader
     /**
      * Shuts down and unloads all Genomes
      * **/
-    public static void unloadGenomes()
+    public static void unloadAllGenomes()
     {
-        GenomeLoader.shutdown();
+        shutdown();
         loadedGenomes.clear();
     }
 
     /**
-     * Unloads one or moe genomes
+     * Unloads one or more Genomes
      * @param genomes Genome names
      * **/
     public static void unloadGenome(String ...genomes)
@@ -240,6 +241,37 @@ public class GenomeLoader
 
             genome.onShutdown();
             loadedGenomes.remove(genomeName);
+        }
+    }
+
+    /**
+     * Unloads and uninstalls all Genomes
+     * @throws IOException If a Genome fails to uninstall
+     * **/
+    public static void uninstallAllGenomes() throws IOException
+    {
+        uninstallGenome(loadedGenomes.keySet().toArray(new String[0]));
+    }
+
+    /**
+     * Unloads and uninstalls one or more Genomes
+     * @param genomes Genome names
+     * @throws IOException If a Genome fails to uninstall
+     * **/
+    public static void uninstallGenome(String ...genomes) throws IOException
+    {
+        for(String genomeName : genomes)
+        {
+            Genome genome = loadedGenomes.get(genomeName);
+            if(genome == null) continue;
+
+            unloadGenome(genomeName);
+
+            CodeSource codeSource = genome.getClass().getProtectionDomain().getCodeSource();
+
+            if(codeSource == null) continue;
+
+            Files.deleteIfExists(Paths.get(codeSource.getLocation().getPath()));
         }
     }
 }

@@ -89,7 +89,7 @@ public class LoadGenome implements CliCommand
     @Override
     public void description(PrintStream printStream)
     {
-        printStream.println("Loads a Genome from a jar file");
+        printStream.println("Loads and installs a Genome from a jar file");
     }
 
     @Override

@@ -3,6 +3,7 @@ package helix.system.cli.namespaces;
 import helix.system.cli.CliNamespace;
 import helix.system.cli.commands.sequencer.ListGenomes;
 import helix.system.cli.commands.sequencer.LoadGenome;
+import helix.system.cli.commands.sequencer.UninstallGenome;
 import helix.system.cli.commands.sequencer.UnloadGenome;
 
 public class GenomeSequencer extends CliNamespace
@@ -12,6 +13,7 @@ public class GenomeSequencer extends CliNamespace
         registerCommand(new ListGenomes());
         registerCommand(new LoadGenome());
         registerCommand(new UnloadGenome());
+        registerCommand(new UninstallGenome());
     }
 
     @Override
