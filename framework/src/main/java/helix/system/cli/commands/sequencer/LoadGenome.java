@@ -96,7 +96,7 @@ public class LoadGenome implements CliCommand
     public void usage(PrintStream printStream)
     {
         printStream.print(command());
-        printStream.println(" <Genome-jar-file|Genome-URL> [sha256-Gnome-digest]");
+        printStream.println(" <Genome-jar-file|Genome-URL> [sha256-Genome-digest]");
     }
 
     @Override

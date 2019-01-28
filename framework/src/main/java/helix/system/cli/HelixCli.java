@@ -128,6 +128,18 @@ public class HelixCli extends Thread
                 outputStream.println();
                 if(line != null && !line.equals("")) execute(line);
 
+                // Feed any extra lines into the current active, multiline command
+                while(activeCommand != null
+                        && activeCommand.multiline()
+                        && activeCommand.expectedBytes() > 0
+                        && (line = br.readLine()) != null
+                        && running)
+                {
+                    activeCommand.feedLine(line, outputStream);
+                }
+
+                activeCommand = null; // Done executing the current command!
+
                 if(activeNamespace == null) outputStream.print("Helix>");
                 else outputStream.print("Helix(" + activeNamespace.name() + ")>");
             }
@@ -205,6 +217,8 @@ public class HelixCli extends Thread
     {
         if(cliCommand == null) return;
         cliCommand.execute(this, outputStream, arguments);
+
+        if(cliCommand.multiline() && cliCommand.expectedBytes() > 0) activeCommand = cliCommand;
     }
 
     /**

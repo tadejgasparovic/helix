@@ -193,6 +193,10 @@ public class Http implements CliCommand
     @Override
     public void feedLine(String line, PrintStream printStream)
     {
+        line = line.replaceAll("\\n", "\n");
+        line = line.replaceAll("\\r", "\r");
+        line = line.replaceAll("\\t", "\t");
+
         if((expectedBytes - line.length()) < 0)
         {
             requestBody.append(line.substring(0, expectedBytes));

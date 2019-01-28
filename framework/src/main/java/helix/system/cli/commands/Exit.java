@@ -17,7 +17,7 @@ public class Exit implements CliCommand
     @Override
     public void description(PrintStream printStream)
     {
-        printStream.println("Switch back to the root context or terminate the CLI");
+        printStream.println("Switch back to the root namespace or terminate the CLI");
     }
 
     @Override
