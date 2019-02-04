@@ -99,8 +99,11 @@ public class HelixKernel
 
         GenomeLoader.unloadAllGenomes();
 
-        helixCli.close();
-        helixCli = null;
+        if(helixCli != null)
+        {
+            helixCli.close();
+            helixCli = null;
+        }
 
         // TODO: Stop Genome watchdogs
     }

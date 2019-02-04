@@ -110,6 +110,7 @@ public class GenomeLoader
             }
         }
 
+
         Class genomeClass;
         try
         {
@@ -121,9 +122,33 @@ public class GenomeLoader
             throw new InvalidGenome();
         }
 
+        if(genomeClass.getClass().getSuperclass().equals(Genome.class))
+        {
+            return injectGenome(genomeClass, config);
+        }
+        throw new InvalidGenome();
+    }
+
+    /**
+     * Injects a Genome directly from a class instead of loading it from a JAR file.
+     * Useful for embedded payloads which reside inside the same JAR file as the Helix framework
+     * @param clazz Class to attempt to instantiate a Genome
+     * @param config Configuration properties containing at least the name of the Genome
+     * @return The name of the injected Genome
+     * @throws NullPointerException If any of the arguments are null
+     * @throws InvalidGenome If the Genome injection fails
+     * **/
+    public static String injectGenome(Class<? extends Genome> clazz, Properties config) throws NullPointerException, InvalidGenome
+    {
+        if(clazz == null || config == null) throw new NullPointerException();
+
+        String name = config.getProperty("name");
+
+        if(name.length() < 1) throw new InvalidGenome();
+
         try
         {
-            Genome genome = (Genome) genomeClass.newInstance();
+            Genome genome = clazz.newInstance();
             genome.onStartup();
             loadedGenomes.put(name, genome);
             return name;
