@@ -6,7 +6,7 @@ import helix.exceptions.InvalidGenome;
 import helix.exceptions.TooManyHttpRedirects;
 import helix.system.cli.CliCommand;
 import helix.system.cli.HelixCli;
-import helix.toolkit.network.HttpClient;
+import helix.toolkit.network.http.HttpClient;
 
 import java.io.File;
 import java.io.IOException;

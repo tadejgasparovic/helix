@@ -3,7 +3,8 @@ package helix.system.cli.commands.network;
 import helix.exceptions.TooManyHttpRedirects;
 import helix.system.cli.CliCommand;
 import helix.system.cli.HelixCli;
-import helix.toolkit.network.HttpClient;
+import helix.toolkit.network.http.HttpClient;
+import helix.toolkit.network.http.Request;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -139,7 +140,12 @@ public class Http implements CliCommand
      * **/
     private void finishRequest(PrintStream printStream) throws IOException, TooManyHttpRedirects
     {
-        InputStream inputStream = httpClient.sendRequest(url, method, requestBody != null ? requestBody.toString().getBytes() : null, headers, followRedirects);
+        Request.Builder requestBuilder = new Request.Builder(url);
+        requestBuilder.method(method);
+        requestBuilder.body(requestBody != null ? requestBody.toString().getBytes() : null);
+        requestBuilder.headers(headers).followRedirects(followRedirects);
+
+        InputStream inputStream = httpClient.sendRequest(requestBuilder.build());
 
         if(httpClient.getStatusCode() / 100 != 2)
         {

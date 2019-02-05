@@ -7,7 +7,8 @@ import helix.exceptions.TooManyHttpRedirects;
 import helix.exceptions.UnsupportedPlatform;
 import helix.system.HelixKernel;
 import helix.toolkit.files.FileUtils;
-import helix.toolkit.network.HttpClient;
+import helix.toolkit.network.http.HttpClient;
+import helix.toolkit.network.http.Request;
 import helix.toolkit.zip.Zip;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -165,7 +166,7 @@ public class OnionManager
      * @return true of the tested service is Tor
      * @throws OnionGeneralFailure if the test couldn't be completed
      * **/
-    private static boolean isTor() throws OnionGeneralFailure
+    public static boolean isTor() throws OnionGeneralFailure
     {
         try {
             LOGGER.debug("Attempting Tor service IDENT...");
@@ -368,7 +369,7 @@ public class OnionManager
     {
         HttpClient httpClient = new HttpClient();
 
-        InputStream inputStream = httpClient.getResource(url);
+        InputStream inputStream = httpClient.sendRequest(new Request.Builder(url).build());
 
         LOGGER.debug("Status Code: {}", httpClient.getStatusCode());
 

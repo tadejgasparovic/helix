@@ -91,7 +91,7 @@ public class HelixKernel
 
     /**
      * Destroys the Helix Kernel.
-     * Closes the CNC tunnel, unloads Genomes, stops development tools, stops Genome watchdogs
+     * Closes the CNC tunnel, unloads Genomes, stops the CLI, stops Genome watchdogs
      * **/
     public static void destroy()
     {

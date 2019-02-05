@@ -1,4 +1,4 @@
-package helix.toolkit.network;
+package helix.toolkit.network.http;
 
 import helix.exceptions.TooManyHttpRedirects;
 import helix.exceptions.UnsupportedHttpVersion;
@@ -78,78 +78,42 @@ public class HttpClient
 
     /**
      * Loads a public resource from a URL
+     * This method is deprecated since a request model and builder were introduced
+     * The simplicity of sending a simple GET request using a builder eliminates the need for this specialized method
      * @param url The URL of the resource
      * @return The input stream of the resource
      * @throws IOException If the server can't be reached / resource doesn't exist
      * **/
+    @Deprecated
     public InputStream getResource(URL url) throws IOException, TooManyHttpRedirects
     {
-        return sendRequest(url, "GET", (byte[]) null, null, true);
+        return sendRequest(new Request.Builder(url).build());
     }
 
     /**
      * Prepares and send an HTTP request
-     * @param url Resource URL
-     * @param method HTTP to be used
-     * @param postData HTTP POST key-value pairs
-     * @param headers HTTP custom responseHeaders
-     * @param followRedirects If TRUE the HttpClient will automatically follow redirects
+     * @param request Request to execute
      * @return The input stream of the resource
      * @throws IOException If the server can't be reached / resource doesn't exist
      * **/
-    public InputStream sendRequest(URL url, String method, Map<String, String> postData, Map<String, String> headers, boolean followRedirects) throws IOException, TooManyHttpRedirects
-    {
-        boolean hasContent = postData != null && postData.size() > 0;
-
-        StringBuilder body = new StringBuilder();
-
-        if(hasContent)
-        {
-            postData.forEach((key, value) -> {
-                try {
-                    body.append(URLEncoder.encode(key, "UTF-8"));
-                    body.append("=");
-                    body.append(URLEncoder.encode(value, "UTF-8"));
-                    body.append("&");
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-            });
-
-            body.deleteCharAt(body.length() - 1);
-        }
-
-        return sendRequest(url, method, body.toString().getBytes(), headers, followRedirects);
-    }
-
-    /**
-     * Prepares and send an HTTP request
-     * @param url Resource URL
-     * @param method HTTP to be used
-     * @param postData HTTP request body content
-     * @param headers HTTP custom responseHeaders
-     * @param followRedirects If TRUE the HttpClient will automatically follow redirects
-     * @return The input stream of the resource
-     * @throws IOException If the server can't be reached / resource doesn't exist
-     * **/
-    public InputStream sendRequest(URL url, String method, byte[] postData, Map<String, String> headers, boolean followRedirects) throws IOException, TooManyHttpRedirects
+    public InputStream sendRequest(Request request) throws IOException, TooManyHttpRedirects
     {
         finishRequest(); // First finish any previous request that might not have been finished by the user
 
         totalRedirects = 0;
 
-        String request = prepareRequest(url, method, postData, headers);
+        String requestString = prepareRequest(request);
 
-        if(url.getProtocol().toUpperCase().equals("HTTPS")) httpSocket = openSSLSocket(url);
-        else httpSocket = openSocket(url);
+        if(request.getUrl().getProtocol().toUpperCase().equals("HTTPS")) httpSocket = openSSLSocket(request.getUrl());
+        else httpSocket = openSocket(request.getUrl());
 
         if(!httpSocket.isConnected()) throw new IOException();
 
-        httpSocket.getOutputStream().write(request.getBytes());
+        httpSocket.getOutputStream().write(requestString.getBytes());
         httpSocket.getOutputStream().flush();
 
         parseResponseHeader(httpSocket.getInputStream());
-        if(followRedirects) handleRedirects(url, method, postData, headers);
+        if(request.shouldFollowRedirects()) handleRedirects(request);
 
         return makeStreamDecoder();
     }
@@ -181,35 +145,34 @@ public class HttpClient
     }
 
     /**
-     * Prepares the HTTP request
-     * @param url Resource URL
-     * @param method HTTP request method to be used
-     * @param postData HTTP request body content
-     * @param headers HTTP custom responseHeaders
+     * Prepares the HTTP request by building the complete request string
+     * @param request HTTP request to prepare
      * @return HTTP request string
      * **/
-    private String prepareRequest(URL url, String method, byte[] postData, Map<String, String> headers)
+    private String prepareRequest(Request request)
     {
         StringBuilder resource = new StringBuilder();
-        resource.append(url.getPath());
+        resource.append(request.getUrl().getPath());
 
         if(resource.length() == 0) resource.append("/");
 
-        if(url.getQuery() != null)
+        if(request.getUrl().getQuery() != null)
         {
             resource.append("?");
-            resource.append(url.getQuery());
+            resource.append(request.getUrl().getQuery());
         }
 
 
-        StringBuilder request = new StringBuilder();
+        StringBuilder requestString = new StringBuilder();
 
-        request.append(method.toUpperCase());
-        request.append(" ");
-        request.append(resource);
-        request.append(" HTTP/");
-        request.append(VERSION);
-        request.append("\r\n");
+        requestString.append(request.getMethod().toUpperCase());
+        requestString.append(" ");
+        requestString.append(resource);
+        requestString.append(" HTTP/");
+        requestString.append(VERSION);
+        requestString.append("\r\n");
+
+        Map<String, String> headers = request.getHeaders();
 
         if(headers == null) headers = new HashMap<>();
         if(requestHeaders == null) requestHeaders = new HashMap<>();
@@ -221,24 +184,24 @@ public class HttpClient
 
         // Set default responseHeaders
         requestHeaders.put("User-Agent", userAgent); // Force put to override any user-set values
-        requestHeaders.put("Host", url.getHost()); // Force put to override any user-set values
+        requestHeaders.put("Host", request.getUrl().getHost()); // Force put to override any user-set values
         requestHeaders.putIfAbsent("Accept", "*");
         requestHeaders.putIfAbsent("Accept-Charset", "*");
         requestHeaders.putIfAbsent("Accept-Encoding", "identity");
         requestHeaders.putIfAbsent("Accept-Language", "*");
         requestHeaders.putIfAbsent("Connection", "close");
 
-        requestHeaders.forEach((key, value) -> request.append(key).append(": ").append(value).append("\r\n"));
+        requestHeaders.forEach((key, value) -> requestString.append(key).append(": ").append(value).append("\r\n"));
 
-        request.append("\r\n");
+        requestString.append("\r\n");
 
-        if(postData != null)
+        if(request.getBody() != null)
         {
-            request.append(new String(postData));
-            request.append("\r\n");
+            requestString.append(new String(request.getBody()));
+            requestString.append("\r\n");
         }
 
-        return request.toString();
+        return requestString.toString();
     }
 
     /**
@@ -279,18 +242,18 @@ public class HttpClient
 
     /**
      * Performs a redirect in case of a 3xx response
-     * @param url Last request URL
-     * @param method Last request method
-     * @param postData Last request post data
-     * @param headers Last request responseHeaders
+     * @param request Request to handle redirects for
      * @throws IOException If the redirect fails
      * **/
-    private void handleRedirects(URL url, String method, byte[] postData, Map<String, String> headers) throws IOException, TooManyHttpRedirects
+    private void handleRedirects(Request request) throws IOException, TooManyHttpRedirects
     {
         Set<String> keys = this.responseHeaders.keySet();
 
         LOGGER.debug("Status code: {}", getStatusCode());
         for(String key : keys) LOGGER.debug("{}: {}", key, this.responseHeaders.get(key));
+
+        String method = request.getMethod();
+        byte[] body = request.getBody();
 
         switch (getStatusCode())
         {
@@ -299,7 +262,7 @@ public class HttpClient
             case 303:
                 // These status codes require a new request to be made as GET
                 method = "GET";
-                postData = null;
+                body = null;
                 break;
 
             case 307:
@@ -320,26 +283,28 @@ public class HttpClient
 
         String nextLocation = this.responseHeaders.get("Location");
 
+        URL url;
+
         if(nextLocation.startsWith("/")) // Redirected to just a different URI?
         {
             StringBuilder nextURLSpec = new StringBuilder();
-            nextURLSpec.append(url.getProtocol());
+            nextURLSpec.append(request.getUrl().getProtocol());
             nextURLSpec.append("://");
-            nextURLSpec.append(url.getHost());
+            nextURLSpec.append(request.getUrl().getHost());
 
-            if(url.getPort() >= 0)
+            if(request.getUrl().getPort() >= 0)
             {
                 nextURLSpec.append(":");
-                nextURLSpec.append(url.getPort());
+                nextURLSpec.append(request.getUrl().getPort());
             }
 
 
             nextURLSpec.append(nextLocation);
 
-            if(url.getQuery() != null)
+            if(request.getUrl().getQuery() != null)
             {
                 nextURLSpec.append("?");
-                nextURLSpec.append(url.getQuery());
+                nextURLSpec.append(request.getUrl().getQuery());
             }
 
             url = new URL(nextURLSpec.toString());
@@ -353,20 +318,25 @@ public class HttpClient
             throw new IOException("Invalid redirect");
         }
 
+        Request.Builder nextRequestBuilder = new Request.Builder(url);
+        nextRequestBuilder.method(method).body(body).headers(request.getHeaders());
+
         persistContentLength = true;
 
-        String request = prepareRequest(url, method, postData, headers);
+        Request nextRequest = nextRequestBuilder.build();
+
+        String requestString = prepareRequest(nextRequest);
 
         if(url.getProtocol().toUpperCase().equals("HTTPS")) httpSocket = openSSLSocket(url);
         else httpSocket = openSocket(url);
 
         if(!httpSocket.isConnected()) throw new IOException();
 
-        httpSocket.getOutputStream().write(request.getBytes());
+        httpSocket.getOutputStream().write(requestString.getBytes());
         httpSocket.getOutputStream().flush();
 
         parseResponseHeader(httpSocket.getInputStream());
-        handleRedirects(url, method, postData, headers);
+        handleRedirects(nextRequest);
     }
 
     /**

@@ -1,4 +1,4 @@
-package helix.toolkit.network;
+package helix.toolkit.network.http;
 
 import helix.network.tor.OnionManager;
 

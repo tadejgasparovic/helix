@@ -1,5 +1,5 @@
-import helix.entryPoint.Genome;
-import helix.entryPoint.GenomeLoader;
+package helix.entryPoint;
+
 import helix.exceptions.InvalidGenome;
 import helix.system.HelixKernel;
 import org.junit.jupiter.api.Test;
