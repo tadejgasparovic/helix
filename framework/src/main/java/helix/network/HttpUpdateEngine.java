@@ -1,48 +1,250 @@
 package helix.network;
 
 import helix.exceptions.OnionGeneralFailure;
+import helix.exceptions.TooManyHttpRedirects;
+import helix.exceptions.UpdateFailure;
 import helix.network.tor.OnionManager;
+import helix.system.Version;
 import helix.toolkit.network.http.HiddenHttpClient;
 import helix.toolkit.network.http.HttpClient;
+import helix.toolkit.network.http.Request;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
-public abstract class HttpUpdateEngine
+public abstract class HttpUpdateEngine implements Runnable
 {
-    private URL endpoint;
     private HttpClient httpClient;
+
+    private volatile Version currentVersion;
+
+    private int intervalSec;
+
+    private Thread workerThread;
 
     /**
      * Creates a new update engine which uses the given endpoint to check for and download updates
-     * @param endpoint Update endpoint
+     * @param currentVersion Currently running version of the software
      * @param clearnetAllowed Can we fallback to a clearnet connection if Tor fails?
+     * @throws UpdateFailure If Tor isn't available and clearnet isn't allowed
      * **/
-    public HttpUpdateEngine(URL endpoint, boolean clearnetAllowed)
+    public HttpUpdateEngine(Version currentVersion, boolean clearnetAllowed) throws UpdateFailure
     {
-        this.endpoint = endpoint;
+        intervalSec = -1; // Single check
+        this.currentVersion = currentVersion;
 
         try
         {
             if(OnionManager.isTor()) httpClient = new HiddenHttpClient();
-            else httpClient = new HttpClient();
-        } catch (OnionGeneralFailure onionGeneralFailure)
+            else if(clearnetAllowed) httpClient = new HttpClient();
+            else throw new UpdateFailure("Tor not available and clearnet not allowed!");
+        }
+        catch (OnionGeneralFailure onionGeneralFailure)
         {
-            httpClient = new HttpClient();
+            if(clearnetAllowed) httpClient = new HttpClient();
+            else throw new UpdateFailure(onionGeneralFailure);
+        }
+    }
+
+    /**
+     * Starts the update engine in a separate thread
+     * @throws RuntimeException If the update engine is already running
+     * **/
+    public void start()
+    {
+        if(workerThread != null) throw new RuntimeException("Update engine already running");
+
+        workerThread = new Thread(this);
+        workerThread.setDaemon(true);
+        workerThread.start();
+    }
+
+    /**
+     * Stops the update engine thread. Blocks for up to 1000ms
+     * @throws InterruptedException If the thread <code>stop()</code> was called on is interrupted
+     * **/
+    public void stop() throws InterruptedException
+    {
+        if(workerThread == null) throw new RuntimeException("Update engine not running");
+
+        workerThread.interrupt();
+        workerThread.join(1000); // Wait for the worker thread to exit
+
+        workerThread = null;
+    }
+
+    /**
+     * Runs the update engine in a separate thread (Shouldn't be called explicitly!)
+     * **/
+    @Override
+    public void run()
+    {
+        if(workerThread == null || !workerThread.isAlive())
+        {
+            throw new RuntimeException("HttpUpdateEngine.run() shouldn't be called explicitly!" +
+                                        "Use HttpUpdateEngine.start() instead");
+        }
+
+        while(!workerThread.isInterrupted())
+        {
+            try
+            {
+                attemptUpdate();
+            }
+            catch (UpdateFailure updateFailure)
+            {
+                updateFailure.printStackTrace();
+            }
+
+            if(intervalSec < 0) break;
+
+            try
+            {
+                Thread.sleep(intervalSec * 1000);
+            }
+            catch (InterruptedException e)
+            {
+                // IGNORE
+            }
+        }
+    }
+
+    /**
+     * Sets the update check interval
+     * @param intervalSec Interval in seconds (-1 to only run a single check)
+     * **/
+    public void setInterval(int intervalSec)
+    {
+        this.intervalSec = intervalSec;
+    }
+
+    /**
+     * Attempts an automatic update if there is a new version available
+     * @return Flag, true if update was successfully performed
+     * @throws UpdateFailure If the update attempt fails
+     * **/
+    public boolean attemptUpdate() throws UpdateFailure
+    {
+        if(!versionCheck(currentVersion)) return false; // Already running the latest version
+
+        URL updateEndpoint = getUpdateEndpoint();
+
+        if(updateEndpoint == null) throw new UpdateFailure("No update endpoint");
+
+        Request request = buildUpdateRequest(updateEndpoint);
+
+        try
+        {
+            InputStream response = httpClient.sendRequest(request);
+            return doUpdate(response);
+        }
+        catch (IOException | TooManyHttpRedirects e)
+        {
+            throw new UpdateFailure(e);
         }
     }
 
     /**
      * Checks the current version against the version returned by the API
+     * @param currentVersion Current software version
+     * @return true if an update is available, otherwise false
+     * @throws UpdateFailure If the version check fails
      * **/
-    public boolean versionCheck(String currentVersion)
+    public boolean versionCheck(Version currentVersion) throws UpdateFailure
     {
-        // TODO
-        return false;
+        URL versionCheckEndpoint = getVersionCheckEndpoint();
+
+        if(versionCheckEndpoint == null) throw new UpdateFailure("No version check endpoint");
+
+        Request request = buildVersionCheckRequest(versionCheckEndpoint);
+
+        InputStream response;
+        try
+        {
+            response = httpClient.sendRequest(request);
+        }
+        catch (IOException | TooManyHttpRedirects e)
+        {
+            throw new UpdateFailure(e);
+        }
+
+        if(response == null) throw new UpdateFailure("Version check failed");
+
+        Version availableVersion = readVersion(response);
+
+        if(availableVersion == null) throw new UpdateFailure("Version check failed. Version is null");
+
+        return currentVersion.compare(availableVersion) < 0;
     }
 
     /**
      * Reads and parses the update server's response
+     * @param response InputStream starting at the beginning of the response body
+     * @return Latest available version
      * **/
-    protected abstract String readVersion(InputStream response);
+    protected abstract Version readVersion(InputStream response);
+
+    /**
+     * Reads and installs the update returned by the server
+     * @param response InputStream starting at the beginning of the response body
+     * @return Flag indicating update success
+     * **/
+    protected abstract boolean doUpdate(InputStream response);
+
+    /**
+     * Returns the URL of the version check endpoint. Using a method to return the URL can prove useful for cases where
+     * the URL needs to be generated on-the-fly
+     * @return URL of the version check endpoint
+     * **/
+    protected abstract URL getVersionCheckEndpoint();
+
+    /**
+     * Returns the URL of the latest update. Using a method to return the URL can prove useful for cases where
+     * the URL needs to be generated on-the-fly or parsed from the response received by <code>readVersion()</code>
+     * @return URL of the latest update
+     * **/
+    protected abstract URL getUpdateEndpoint();
+
+    /**
+     * Builds the request used in the update download. Can be overridden to modify the request and allow for things
+     * such as authorization, etc.
+     * @param url URL to send the request to. Usually return value of <code>getUpdateEndpoint()</code>
+     * @return Built request
+     * **/
+    protected Request buildUpdateRequest(URL url)
+    {
+        Request.Builder requestBuilder = new Request.Builder(url);
+        return requestBuilder.build();
+    }
+
+    /**
+     * Builds the request used in the version check. Can be overridden to modify the request and allow for things
+     * such as authorization, etc.
+     * @param url URL to send the request to. Usually return value of <code>getVersionCheckEndpoint()</code>
+     * @return Built request
+     * **/
+    protected Request buildVersionCheckRequest(URL url)
+    {
+        Request.Builder requestBuilder = new Request.Builder(url);
+        return requestBuilder.build();
+    }
+
+    /**
+     * Current software version getter
+     * @return Current version
+     * **/
+    public Version getCurrentVersion()
+    {
+        return currentVersion;
+    }
+
+    /**
+     * Current software version setter
+     * @param currentVersion New software version
+     * **/
+    public void setCurrentVersion(Version currentVersion)
+    {
+        this.currentVersion = currentVersion;
+    }
 }
