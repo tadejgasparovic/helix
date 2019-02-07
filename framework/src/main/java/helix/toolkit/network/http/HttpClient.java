@@ -21,7 +21,7 @@ import java.util.Set;
 public class HttpClient
 {
     /**
-     * HTTP version to be used in requests
+     * HTTP versions to be used in requests
      * **/
     private static final String VERSION = "1.1";
 

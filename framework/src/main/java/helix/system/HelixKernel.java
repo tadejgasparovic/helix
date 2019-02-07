@@ -4,6 +4,8 @@ import helix.entryPoint.GenomeLoader;
 import helix.exceptions.OnionGeneralFailure;
 import helix.exceptions.OnionSetupFailure;
 import helix.exceptions.UnsupportedPlatform;
+import helix.exceptions.UpdateFailure;
+import helix.network.HelixUpdateEngine;
 import helix.network.tor.OnionManager;
 import helix.system.cli.HelixCli;
 
@@ -13,6 +15,8 @@ public class HelixKernel
 {
 
     private static HelixCli helixCli;
+
+    private static HelixUpdateEngine updateEngine;
 
     /**
      * Returns the normalized platform OS name
@@ -84,6 +88,17 @@ public class HelixKernel
             helixCli.start();
         }
 
+        // TODO: Read current versions from config / POM ?
+        try
+        {
+            updateEngine = new HelixUpdateEngine(null /* FIXME */, false);
+            updateEngine.start();
+        }
+        catch (UpdateFailure updateFailure)
+        {
+            updateFailure.printStackTrace();
+        }
+
         // TODO: Start Genome watchdogs if configured
 
         return true;
@@ -92,8 +107,9 @@ public class HelixKernel
     /**
      * Destroys the Helix Kernel.
      * Closes the CNC tunnel, unloads Genomes, stops the CLI, stops Genome watchdogs
+     * @throws InterruptedException If the thread calling <code>destroy()</code> is interrupted
      * **/
-    public static void destroy()
+    public static void destroy() throws InterruptedException
     {
         // TODO: Kill CNC connection
 
@@ -103,6 +119,12 @@ public class HelixKernel
         {
             helixCli.close();
             helixCli = null;
+        }
+
+        if(updateEngine != null)
+        {
+            updateEngine.stop();
+            updateEngine = null;
         }
 
         // TODO: Stop Genome watchdogs

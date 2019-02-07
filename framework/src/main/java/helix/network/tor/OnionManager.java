@@ -58,7 +58,7 @@ public class OnionManager
             HelixKernel.OSName.UNIX
     };
 
-    // TODO: Dinamically load the latest version
+    // TODO: Dinamically load the latest versions
     private static final String TOR_DOWNLOAD_WINDOWS = "https://www.torproject.org/dist/torbrowser/8.0.3/tor-win32-0.3.4.8.zip";
     private static final String TOR_DOWNLOAD_UNIX = null; // TODO: Support Unix system downloads; for now assume Tor is already installed
     private static final String TOR_DOWNLOAD_MAC = null; // TODO: Support Mac system downloads; for now assume Tor is already installed

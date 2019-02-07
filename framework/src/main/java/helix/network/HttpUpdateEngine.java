@@ -4,7 +4,7 @@ import helix.exceptions.OnionGeneralFailure;
 import helix.exceptions.TooManyHttpRedirects;
 import helix.exceptions.UpdateFailure;
 import helix.network.tor.OnionManager;
-import helix.system.Version;
+import helix.system.versions.Version;
 import helix.toolkit.network.http.HiddenHttpClient;
 import helix.toolkit.network.http.HttpClient;
 import helix.toolkit.network.http.Request;
@@ -25,7 +25,7 @@ public abstract class HttpUpdateEngine implements Runnable
 
     /**
      * Creates a new update engine which uses the given endpoint to check for and download updates
-     * @param currentVersion Currently running version of the software
+     * @param currentVersion Currently running versions of the software
      * @param clearnetAllowed Can we fallback to a clearnet connection if Tor fails?
      * @throws UpdateFailure If Tor isn't available and clearnet isn't allowed
      * **/
@@ -120,13 +120,13 @@ public abstract class HttpUpdateEngine implements Runnable
     }
 
     /**
-     * Attempts an automatic update if there is a new version available
+     * Attempts an automatic update if there is a new versions available
      * @return Flag, true if update was successfully performed
      * @throws UpdateFailure If the update attempt fails
      * **/
     public boolean attemptUpdate() throws UpdateFailure
     {
-        if(!versionCheck(currentVersion)) return false; // Already running the latest version
+        if(!versionCheck(currentVersion)) return false; // Already running the latest versions
 
         URL updateEndpoint = getUpdateEndpoint();
 
@@ -146,16 +146,16 @@ public abstract class HttpUpdateEngine implements Runnable
     }
 
     /**
-     * Checks the current version against the version returned by the API
-     * @param currentVersion Current software version
+     * Checks the current versions against the versions returned by the API
+     * @param currentVersion Current software versions
      * @return true if an update is available, otherwise false
-     * @throws UpdateFailure If the version check fails
+     * @throws UpdateFailure If the versions check fails
      * **/
     public boolean versionCheck(Version currentVersion) throws UpdateFailure
     {
         URL versionCheckEndpoint = getVersionCheckEndpoint();
 
-        if(versionCheckEndpoint == null) throw new UpdateFailure("No version check endpoint");
+        if(versionCheckEndpoint == null) throw new UpdateFailure("No versions check endpoint");
 
         Request request = buildVersionCheckRequest(versionCheckEndpoint);
 
@@ -181,7 +181,7 @@ public abstract class HttpUpdateEngine implements Runnable
     /**
      * Reads and parses the update server's response
      * @param response InputStream starting at the beginning of the response body
-     * @return Latest available version
+     * @return Latest available versions
      * **/
     protected abstract Version readVersion(InputStream response);
 
@@ -193,9 +193,9 @@ public abstract class HttpUpdateEngine implements Runnable
     protected abstract boolean doUpdate(InputStream response);
 
     /**
-     * Returns the URL of the version check endpoint. Using a method to return the URL can prove useful for cases where
+     * Returns the URL of the versions check endpoint. Using a method to return the URL can prove useful for cases where
      * the URL needs to be generated on-the-fly
-     * @return URL of the version check endpoint
+     * @return URL of the versions check endpoint
      * **/
     protected abstract URL getVersionCheckEndpoint();
 
@@ -219,7 +219,7 @@ public abstract class HttpUpdateEngine implements Runnable
     }
 
     /**
-     * Builds the request used in the version check. Can be overridden to modify the request and allow for things
+     * Builds the request used in the versions check. Can be overridden to modify the request and allow for things
      * such as authorization, etc.
      * @param url URL to send the request to. Usually return value of <code>getVersionCheckEndpoint()</code>
      * @return Built request
@@ -231,8 +231,8 @@ public abstract class HttpUpdateEngine implements Runnable
     }
 
     /**
-     * Current software version getter
-     * @return Current version
+     * Current software versions getter
+     * @return Current versions
      * **/
     public Version getCurrentVersion()
     {
@@ -240,8 +240,8 @@ public abstract class HttpUpdateEngine implements Runnable
     }
 
     /**
-     * Current software version setter
-     * @param currentVersion New software version
+     * Current software versions setter
+     * @param currentVersion New software versions
      * **/
     public void setCurrentVersion(Version currentVersion)
     {
