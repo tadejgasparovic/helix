@@ -8,11 +8,16 @@ import helix.exceptions.UpdateFailure;
 import helix.network.HelixUpdateEngine;
 import helix.network.tor.OnionManager;
 import helix.system.cli.HelixCli;
+import helix.system.versions.MajorMinorPatchVersion;
+import helix.system.versions.Version;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 public class HelixKernel
 {
+    public static final Version VERSION = new MajorMinorPatchVersion(0, 1, 0);
+
 
     private static HelixCli helixCli;
 
@@ -88,15 +93,15 @@ public class HelixKernel
             helixCli.start();
         }
 
-        // TODO: Read current versions from config / POM ?
         try
         {
-            updateEngine = new HelixUpdateEngine(null /* FIXME */, false);
+            String clearnetUpdateAllowed = Config.instance().getProperty("clearnetUpdateAllowed");
+            updateEngine = new HelixUpdateEngine(VERSION, Boolean.parseBoolean(clearnetUpdateAllowed));
             updateEngine.start();
         }
-        catch (UpdateFailure updateFailure)
+        catch (UpdateFailure | IOException e)
         {
-            updateFailure.printStackTrace();
+            e.printStackTrace();
         }
 
         // TODO: Start Genome watchdogs if configured

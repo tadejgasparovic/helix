@@ -137,7 +137,7 @@ public abstract class HttpUpdateEngine implements Runnable
         try
         {
             InputStream response = httpClient.sendRequest(request);
-            return doUpdate(response);
+            return doUpdate(httpClient, response);
         }
         catch (IOException | TooManyHttpRedirects e)
         {
@@ -171,7 +171,7 @@ public abstract class HttpUpdateEngine implements Runnable
 
         if(response == null) throw new UpdateFailure("Version check failed");
 
-        Version availableVersion = readVersion(response);
+        Version availableVersion = readVersion(httpClient, response);
 
         if(availableVersion == null) throw new UpdateFailure("Version check failed. Version is null");
 
@@ -180,17 +180,21 @@ public abstract class HttpUpdateEngine implements Runnable
 
     /**
      * Reads and parses the update server's response
+     * @param context Request context / HttpClient
      * @param response InputStream starting at the beginning of the response body
      * @return Latest available versions
+     * @throws UpdateFailure If the latest version cannot be parsed from the response
      * **/
-    protected abstract Version readVersion(InputStream response);
+    protected abstract Version readVersion(HttpClient context, InputStream response) throws UpdateFailure;
 
     /**
      * Reads and installs the update returned by the server
+     * @param context Request context / HttpClient
      * @param response InputStream starting at the beginning of the response body
      * @return Flag indicating update success
+     * @throws UpdateFailure If the latest version cannot be downloaded / installed
      * **/
-    protected abstract boolean doUpdate(InputStream response);
+    protected abstract boolean doUpdate(HttpClient context, InputStream response) throws UpdateFailure;
 
     /**
      * Returns the URL of the versions check endpoint. Using a method to return the URL can prove useful for cases where

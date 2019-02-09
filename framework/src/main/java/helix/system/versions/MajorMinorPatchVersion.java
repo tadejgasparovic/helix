@@ -9,8 +9,9 @@ public class MajorMinorPatchVersion extends Version
      * A major.minor.patch version contains three integers separated by a dot (.).
      * The first, second and third number represent the major, minor and patch versions respectively
      * @param version String containing the version
+     * @throws InvalidVersionFormat If the version string doesn't conform to the expecteds format
      **/
-    public MajorMinorPatchVersion(String version)
+    public MajorMinorPatchVersion(String version) throws InvalidVersionFormat
     {
         super(version);
         if(!version.matches("^[0-9]+\\.[0-9]+\\.[0-9]+$")) throw new InvalidVersionFormat("Expected <major>.<minor>.<patch>");

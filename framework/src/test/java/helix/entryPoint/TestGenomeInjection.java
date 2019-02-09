@@ -29,7 +29,7 @@ public class TestGenomeInjection extends Genome
     }
 
     @Test
-    public void doesSuccessfullyInjectGenome() throws InvalidGenome
+    public void doesSuccessfullyInjectGenome() throws InvalidGenome, InterruptedException
     {
         HelixKernel.bootstrap(new String[0]);
 
@@ -39,7 +39,5 @@ public class TestGenomeInjection extends Genome
         assertEquals(GenomeLoader.injectGenome(this.getClass(), config), "injected");
 
         HelixKernel.destroy();
-
-
     }
 }

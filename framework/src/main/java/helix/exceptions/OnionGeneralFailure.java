@@ -11,4 +11,9 @@ public class OnionGeneralFailure extends Exception
     {
         super(message);
     }
+
+    public OnionGeneralFailure(Throwable throwable)
+    {
+        super(throwable);
+    }
 }

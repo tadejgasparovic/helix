@@ -168,7 +168,8 @@ public class OnionManager
      * **/
     public static boolean isTor() throws OnionGeneralFailure
     {
-        try {
+        try
+        {
             LOGGER.debug("Attempting Tor service IDENT...");
 
             Socket testSocket = new Socket(proxyHost, proxyPort);
@@ -199,8 +200,10 @@ public class OnionManager
 
             return responseLine.toUpperCase().contains("TOR");
 
-        } catch (IOException e) {
-            throw new OnionGeneralFailure();
+        }
+        catch (IOException e)
+        {
+            return false;
         }
     }
 
